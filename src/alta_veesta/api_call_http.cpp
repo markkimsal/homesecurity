@@ -29,8 +29,6 @@ void api_call_http_register_self(byte amsg_server[]) {
 	*/
 
 	if (!client.connect(amsg_server, pgm_read_word(&msg_server_port))) {
-	//if (!client.connect(server, port)) {
-	//if (!client.connect("192.168.2.77", port)) {
 		Serial.println("HTTP failed");
 		return;
 	}
@@ -38,7 +36,7 @@ void api_call_http_register_self(byte amsg_server[]) {
 	char d;
 	String netbuf = "GET ";
     netbuf += path;
-	netbuf += " HTTP/1.0\nHost: foo\nConnection: close\n\n\n";
+	netbuf += " HTTP/1.0\nHost: " + host + "\nConnection: close\n\n\n";
 
 	Serial.println("HTTP connected");
 
