@@ -1,0 +1,7 @@
+*.o
+*.d
+src/alta_veesta/build-cli
+src/alta_veesta/build-cli/*
+src/alta_veesta/ardmake
+src/alta_veesta/Makefile
+src/alta_veesta/config.h
