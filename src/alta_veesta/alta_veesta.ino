@@ -8,9 +8,11 @@ int msg_len_status = 45;
 int msg_len_ack = 4;
 
 
-char gcbuf[100];
+char gcbuf[30];
 int  gidx = 0;
 int  lastgidx = 0;
+
+char alarm_buf[3][30];
 
 char guibuf[100];
 int  guidx = 0;
@@ -28,7 +30,9 @@ SoftwareSerial vista(vistaIn, vistaOut, true);
 #include <SPI.h>
 #include <Ethernet.h>
 
-byte mac[] = { 0xF6, 0x75, 0x92, 0x78, 0x67, 0x3F };
+byte mac[] = { 0xB8, 0x70, 0xF4, 0x1E, 0xC5, 0x7E };
+//byte mac[] = { 0xF6, 0x75, 0x92, 0x78, 0x67, 0x3F };
+//b8:70:f4:1e:c5:7e
 
 
 int ledPin =  13;    // LED connected to digital pin 13
@@ -231,7 +235,7 @@ void read_chars_dyn(char buf[], int *idx, int limit)
 //				Serial.println(limit, DEC);
 				*idx = idxval;
 				return;
-			} 
+			}
 			buf[ idxval ] = c;
 			idxval++;
 			x++;
@@ -259,7 +263,7 @@ void read_chars(int ct, char buf[], int *idx, int limit)
 				Serial.println(limit, DEC);
 				*idx = idxval;
 				return;
-			} 
+			}
 			buf[ idxval ] = c;
 			idxval++;
 			x++;
@@ -273,7 +277,13 @@ void read_chars(int ct, char buf[], int *idx, int limit)
 
 
 void on_alarm() {
+	api_call_alarm();
 }
+
+void on_init() {
+	api_call_init();
+}
+
 
 
 void on_command(char cbuf[], int *idx) {
@@ -297,11 +307,48 @@ void on_command(char cbuf[], int *idx) {
 	#endif
 }
 
+/**
+ * This is a panic button hold
+ , ,f,f,c, ,E,C, ,1, ,E,l, , , , , , , ,
+F2,16,66,66,63,02,45,43,F5,31,FB,45,6C,F5,EC,01,01,01,01,88,
+1111-0010,0001-0110,0110-0110,0110-0110,0110-0011,0000-0010,0100-0101,0100-0011,1111-0101,0011-0001,1111-1011,0100-0101,0110-1100,1111-0101,1110-1100,0000-0001,0000-0001,0000-0001,0000-0001,1000-1000,
+no alarm
+
+ * This is a door open disarmed
+ , ,f,f,c, ,E,C, ,1, ,E,l, , , , , , , ,
+F2,16,66,66,63,02,45,43,F5,31,FB,45,6C,F5,EC,01,02,01,06,82,
+1111-0010,0001-0110,0110-0110,0110-0110,0110-0011,0000-0010,0100-0101,0100-0011,1111-0101,0011-0001,1111-1011,0100-0101,0110-1100,1111-0101,1110-1100,0000-0001,0000-0010,0000-0001,0000-0110,1000-0010,
+no alarm
+
+ , ,f,b,c, ,E,C, ,1, ,E,l, , , , , , , ,
+F2,16,66,62,63,02,45,43,F5,31,FB,45,6C,F5,EC,01,02,01,06,86,
+1111-0010,0001-0110,0110-0110,0110-0010,0110-0011,0000-0010,0100-0101,0100-0011,1111-0101,0011-0001,1111-1011,0100-0101,0110-1100,1111-0101,1110-1100,0000-0001,0000-0010,0000-0001,0000-0110,1000-0110,
+no alarm
+
+
+ * Closing a door, disarmed
+ , ,f,`,c, ,E,C, ,1, ,E,l, , , , , , , ,
+F2,16,66,60,63,02,45,43,F5,31,FB,45,6C,F5,EC,01,01,01,01,8E,
+1111-0010,0001-0110,0110-0110,0110-0000,0110-0011,0000-0010,0100-0101,0100-0011,1111-0101,0011-0001,1111-1011,0100-0101,0110-1100,1111-0101,1110-1100,0000-0001,0000-0001,0000-0001,0000-0001,1000-1110,
+no alarm
+
+ * Follower, stay
+ , ,f,d,c, ,E,C, ,1, ,E,l, , , , , , , ,
+F2,16,66,64,63,02,45,43,F5,31,FB,45,6C,F5,EC,02,01,01,06,84,
+1111-0010,0001-0110,0110-0110,0110-0100,0110-0011,0000-0010,0100-0101,0100-0011,1111-0101,0011-0001,1111-1011,0100-0101,0110-1100,1111-0101,1110-1100,0000-0010,0000-0001,0000-0001,0000-0110,1000-0100,
+no alarm
+
+ */
 void on_status(char cbuf[], int *idx) {
 
 
 	//F2 12 unknown message type
 	if ( cbuf[1] == 0x12) {
+		return;
+	}
+
+	//F2 00  are display messages
+	if ( cbuf[1] == 0x00) {
 		return;
 	}
 
@@ -311,6 +358,7 @@ void on_status(char cbuf[], int *idx) {
 	#endif
 
 	//16th spot is 01 for disarmed, 02 for armed
+	//short armed = (0x02 & cbuf[15]) && !(cbuf[15] & 0x01);
 	short armed = 0x02 & cbuf[15];
 
 	//17th spot is confusing
@@ -328,11 +376,13 @@ void on_status(char cbuf[], int *idx) {
 
 	if (alarm == 1 && armed ) {
 		on_alarm();
-		Serial.print ("ALARM!");
+		Serial.println ("ALARM!");
+		//save gcbuf for debugging
+		strncpy(alarm_buf[0],  cbuf, 30);
 	} else if (alarm ==1) {
-		Serial.print ("alarm canceled");
+		Serial.println ("alarm canceled");
 	} else {
-		Serial.print ("no alarm");
+		Serial.println ("no alarm");
 	}
 
 	memset(cbuf, 0, sizeof(cbuf));
@@ -379,6 +429,51 @@ void on_ack(char cbuf[], int *idx) {
 
 }
 
+void on_debug() {
+	int tmp_idx = 29;
+	debug_cbuf(alarm_buf[0], &tmp_idx, false);
+}
+
+void readConsole() {
+
+	int serialStrIdx;
+	int inByte = 0;
+	char serialIn[50];
+	const int termChar = 13; //Terminate lines with CR
+
+	memset(serialIn,0,sizeof(serialIn));
+
+	inByte = Serial.read();
+
+        if (inByte < 0) return;
+
+//Serial.print("I received: ");
+//Serial.println(inByte, DEC);
+	serialStrIdx=0;
+
+
+
+	//If we see data (inByte > 0) and that data isn't a carriage return
+
+	if (inByte > 0 && inByte != termChar) {
+		do {
+			if ( inByte == termChar ) break;
+
+			serialIn[serialStrIdx] = inByte; // Save the data in a character array
+			serialStrIdx++; //Increment position in array
+			inByte = Serial.read(); // Read next byte
+		} while (serialStrIdx < 50);
+
+		serialIn[serialStrIdx] = 0; //Null terminate the serialIn
+	}
+
+Serial.println(serialIn);
+	//run commands
+	if (strncmp( serialIn, "debug", 5) == 0 ) {
+		on_debug();
+	}
+}
+
 void loop()
 {
 
@@ -389,6 +484,8 @@ void loop()
 //		      Serial.println(lastgidx);
 //		      Serial.println(gidx);
 		}
+                readConsole();
+
 		return;
 	}
 
@@ -418,7 +515,7 @@ void loop()
 		gcbuf[ gidx ] = x;
 		gidx++;
 
-		read_chars( msg_len_ack -1, gcbuf, &gidx, 100);
+		read_chars( msg_len_ack -1, gcbuf, &gidx, 30);
 
 		on_ack(gcbuf, &gidx);
 		return;
@@ -431,7 +528,7 @@ void loop()
 		gcbuf[ gidx ] = x;
 		gidx++;
 
-		read_chars_dyn( gcbuf, &gidx, 100);
+		read_chars_dyn( gcbuf, &gidx, 30);
 
 		on_status(gcbuf, &gidx);
 		return;
@@ -441,7 +538,14 @@ void loop()
 //   print_hex(x, 8);
    gcbuf[ gidx ] = x;
    gidx++;
+
+	if (gidx >= 30) {
+		Serial.print("Buffer overflow: ");
+		debug_cbuf(gcbuf, &gidx, true);
+		return;
+	}
 }
+
 
 
 void send_email() {
@@ -463,10 +567,12 @@ void setup()   {
   Serial.println("good morning");
   
 
-/*
 	Serial.println("Starting ethernet with DHCP...");
 	blink_dhcp();
 	//ethernet
+
+//	Ethernet.begin(mac, {192, 168, 100, 4});
+/*
 	if (Ethernet.begin(mac) == 0) {
 		Serial.println("Failed to configure Ethernet using DHCP");
 		// no point in carrying on, so do nothing forevermore:
@@ -475,8 +581,9 @@ void setup()   {
 	}
 	// print your local IP address:
 	Serial.println(Ethernet.localIP()); 
+	Serial.println("Triggering fake alarm for testing...");
+	on_init();
 */
-
 	#ifdef USE_SMTP
 //		send_email();
 	#endif

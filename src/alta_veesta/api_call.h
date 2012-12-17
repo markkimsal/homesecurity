@@ -10,6 +10,10 @@
 
 void api_call_register_self();
 
+void api_call_alarm();
+
+void api_call_init();
+
 #ifdef USE_HTTP
 #include "api_call_http.h"
 #endif

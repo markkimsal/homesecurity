@@ -28,3 +28,41 @@ void api_call_register_self() {
 	#endif
 }
 
+void api_call_alarm() {
+
+	byte  amsg_server[4];
+	amsg_server[0] = pgm_read_byte(&msg_server[0]);
+	amsg_server[1] = pgm_read_byte(&msg_server[1]);
+	amsg_server[2] = pgm_read_byte(&msg_server[2]);
+	amsg_server[3] = pgm_read_byte(&msg_server[3]);
+
+
+	#ifdef USE_HTTP
+		api_call_http_alarm(amsg_server);
+	#endif
+
+	#ifdef USE_ZMQ
+		//Serial.println("ZMQ opening connection...");
+		api_call_zmq_alarm(amsg_server);
+	#endif
+}
+
+void api_call_init() {
+
+	byte  amsg_server[4];
+	amsg_server[0] = pgm_read_byte(&msg_server[0]);
+	amsg_server[1] = pgm_read_byte(&msg_server[1]);
+	amsg_server[2] = pgm_read_byte(&msg_server[2]);
+	amsg_server[3] = pgm_read_byte(&msg_server[3]);
+
+
+	#ifdef USE_HTTP
+		api_call_http_init(amsg_server);
+	#endif
+
+	#ifdef USE_ZMQ
+		//Serial.println("ZMQ opening connection...");
+		api_call_zmq_init(amsg_server);
+	#endif
+}
+

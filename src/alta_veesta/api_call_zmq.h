@@ -8,5 +8,7 @@
 #include "alta_veesta.h"
 
 void api_call_zmq_register_self(byte amsg_server[]);
+void api_call_zmq_alarm(byte amsg_server[]);
+void api_call_zmq_init(byte amsg_server[]);
 
 #endif

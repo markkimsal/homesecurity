@@ -50,3 +50,15 @@ void api_call_zmq_register_self(byte amsg_server[]) {
 	client.stop();
 	*/
 }
+
+void api_call_zmq_alarm(byte amsg_server[]) {
+
+	Serial.println("ZMQ opening connection...");
+
+	unsigned int port = pgm_read_word( msg_server_port );
+
+	char path[ 30 ];
+	char host[ 20 ];
+	strcpy_P(path, msg_server_path);
+	strcpy_P(host, msg_server_host);
+}
