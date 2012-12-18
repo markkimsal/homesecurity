@@ -2,12 +2,16 @@
 #define config_h
 
 #define DEBUG 0
-#define DEBUG_STATUS 0
+//#define DEBUG_STATUS 0
 //#define DEBUG_KEYS    0
-#define DEBUG_DISPLAY 0
+//#define DEBUG_DISPLAY 0
+
+//try to enable network and DHCP?
+#define HAVE_NETWORK 1
+//#define USE_DHCP     1
+#define STATIC_IP  {192, 168, 2, 104}
 
 // HTTP method is required for self-registering
-
 #define USE_HTTP 1
 //#define USE_SMTP 1
 //#define USE_ZMQ  1

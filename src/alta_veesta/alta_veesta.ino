@@ -630,33 +630,37 @@ void send_email() {
 
 
 void setup()   {                
-  // initialize the digital pin as an output:
-  pinMode(ledPin, OUTPUT);     
+	// initialize the digital pin as an output:
+	pinMode(ledPin, OUTPUT);     
+	blink_alive();
 
-  blink_alive();
+	//initialize USB serial
+	Serial.begin(115200);
+	Serial.println("good morning");
 
-  //initialize USB serial
-  Serial.begin(115200);
-  Serial.println("good morning");
-  
-
-	Serial.println("Starting ethernet with DHCP...");
-	blink_dhcp();
 	//ethernet
-
-//	Ethernet.begin(mac, {192, 168, 100, 4});
-/*
+	#ifdef HAVE_NETWORK
+	#ifdef USE_DHCP
+	Serial.println("Starting ethernet with DHCP... ");
+	blink_dhcp();
 	if (Ethernet.begin(mac) == 0) {
 		Serial.println("Failed to configure Ethernet using DHCP");
 		// no point in carrying on, so do nothing forevermore:
 		for(;;)
 		;
 	}
-	// print your local IP address:
+	Serial.print("Got DHCP IP: ");
 	Serial.println(Ethernet.localIP()); 
-	Serial.println("Triggering fake alarm for testing...");
+	#else
+	Serial.print("Starting ethernet with static IP... ");
+	Ethernet.begin(mac, STATIC_IP);
+	Serial.println(Ethernet.localIP()); 
+	#endif
+	// print your local IP address:
+	Serial.println("Triggering fake alarm for testing... ");
 	on_init();
-*/
+	#endif
+
 	#ifdef USE_SMTP
 //		send_email();
 	#endif
