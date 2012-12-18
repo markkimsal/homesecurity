@@ -67,7 +67,7 @@ static const DELAY_TABLE PROGMEM table[] =
   { 19200,    54,        117,       117,      114,   },
   { 14400,    74,        156,       156,      153,   },
   { 9600,     114,       236,       236,      233,   },
-  { 4800,     233,       474,       474,      471,   },
+  { 4800,     245,       475,       475,      471,   },
   { 2400,     471,       950,       950,      947,   },
   { 1200,     947,       1902,      1902,     1899,  },
   { 300,      3804,      7617,      7617,     7614,  },
@@ -235,11 +235,16 @@ void SoftwareSerial::recv()
 
 	// skip the parity bit
     tunedDelay(_rx_delay_stopbit);
-    DebugPulse(_DEBUG_PIN2, 1);
+//    DebugPulse(_DEBUG_PIN2, 1);
 
     // skip the stop bit
     tunedDelay(_rx_delay_stopbit);
+//    DebugPulse(_DEBUG_PIN2, 1);
+
+    // skip the second stop bit
+    tunedDelay(_rx_delay_stopbit);
     DebugPulse(_DEBUG_PIN2, 1);
+
 
     if (_inverse_logic)
       d = ~d;
