@@ -433,7 +433,7 @@ void on_status(char cbuf[], int *idx) {
 	Serial.println();
 
 	if ( armed && fault && !exit_delay ) {
-		//on_alarm();
+		on_alarm();
 		Serial.println ("F2: ALARM!");
 		//save gcbuf for debugging
 		strncpy(alarm_buf[0],  cbuf, 30);
