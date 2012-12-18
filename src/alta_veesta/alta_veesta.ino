@@ -205,42 +205,21 @@ void read_chars_dyn(char buf[], int *idx, int limit)
 
 	buf[ idxval ] = c;
 	idxval++;
-	x++;
 
-	if (c & 0x04) {
-		ct = 19;
-	} else {
-		ct = 13;
-	}
-	if (c & 0x08) {
-		ct = 24;
-	}
-
-	if (c == 0x0B) {
-		ct = 7;
-	}
-
-	if (c == 0x1F) {
-		ct = 25;
-	}
+	ct = (int)c;
 
 	while (x < ct) {
 		if (vista.available()) {
 			c = vista.read();
-			if (!c) continue;
 			if (idxval >= limit) {
-				
-				Serial.print("Buffer overflow: ");
-//				Serial.println(idxval, DEC);
-//				Serial.println(limit, DEC);
+				Serial.print("Dyn Buffer overflow: ");
+				Serial.println(idxval, DEC);
 				*idx = idxval;
 				return;
 			}
 			buf[ idxval ] = c;
 			idxval++;
 			x++;
-		} else {
-//			debug_cbuf(buf, &idxval, false);
 		}
 	}
 	digitalWrite(ledPin, LOW); 
@@ -342,48 +321,134 @@ no alarm
 void on_status(char cbuf[], int *idx) {
 
 
-	//F2 12 unknown message type
-	if ( cbuf[1] == 0x12) {
-		return;
-	}
-
+	//this might be a mistaken read...
+	//also, F2 00 should read no more bytes
 	//F2 00  are display messages
 	if ( cbuf[1] == 0x00) {
+	//	return;
+	}
+
+	Serial.print("F2: {");
+	//first 6 bytes are headers
+	for (int x = 1; x < 7 ; x++) {
+		print_hex( cbuf[x], 8);
+		Serial.print(",");
+	}
+	//7th byte is incremental counter
+	Serial.print (" cnt: ");
+	print_hex( cbuf[7], 8 );
+	Serial.println ("}");
+
+	//8-end is body
+	Serial.print("F2: ");
+	for (int x = 8; x < *idx ; x++) {
+		print_hex( cbuf[x], 8);
+		Serial.print(",");
+	}
+
+	Serial.println();
+
+	//F2 messages with less than 16 bytes don't seem to have
+	// any important information
+	if ( 19 > (int) cbuf[1]) {
+		#ifdef DEBUG_STATUS
+		Serial.println("F2: Unknown message - too short");
+		#endif
+
+		//clear memory
+		memset(cbuf, 0, sizeof(cbuf));
+		*idx = 0;
 		return;
 	}
 
 	#ifdef DEBUG_STATUS
-	//DEBUG
-	debug_cbuf(cbuf, idx, false);
+	//19, 20, 21, 22
+	Serial.print("F2: 19 = ");
+	print_hex(cbuf[19], 8);
+	Serial.println();
+
+	Serial.print("F2: 20 = ");
+	print_hex(cbuf[20], 8);
+	Serial.println();
+
+	Serial.print("F2: 21 = ");
+	print_hex(cbuf[21], 8);
+	Serial.println();
+
+	Serial.print("F2: 22 = ");
+	print_hex(cbuf[22], 8);
+	Serial.println();
 	#endif
 
-	//16th spot is 01 for disarmed, 02 for armed
-	//short armed = (0x02 & cbuf[15]) && !(cbuf[15] & 0x01);
-	short armed = 0x02 & cbuf[15];
 
-	//17th spot is confusing
-	//short unknown = 0x02 & cbuf[16];
+	//19th spot is 01 for disarmed, 02 for armed
+	//short armed = (0x02 & cbuf[19]) && !(cbuf[19] & 0x01);
+	short armed = 0x02 & cbuf[19];
 
-	//18th spot is for bypass
-	short bypass = 0x02 & cbuf[17];
+	//20th spot is away / stay
+	// this bit is really confusing
+	// it clearly switches to 2 when you set away mode
+	// but it is also 0x02 when an alarm is canceled, 
+	// but not cleared - even if you are in stay mode.
+	short away = 0x02 & cbuf[20];
 
-	//19th spot is for alarm types
+	//21st spot is for bypass
+	short bypass = 0x02 & cbuf[21];
+
+	//22nd spot is for alarm types
 	//1 is no alarm
-	//2 is no alarm
+	//2 is ignore faults (like exit delay)
 	//4 is a alarm 
 	//6 is a fault that does not cause an alarm
-	short alarm = (cbuf[18] & 0x04) && !(cbuf[18] & 0x02);
+	short exit_delay = (cbuf[22] & 0x02);
+	short fault = (cbuf[22] & 0x04);
 
-	if (alarm == 1 && armed ) {
-		on_alarm();
-		Serial.println ("ALARM!");
+	Serial.print("F2: armed: ");
+	if (armed) {
+		Serial.print("yes");
+	} else {
+		Serial.print("no");
+	}
+	Serial.print("; mode: ");
+	if (away) {
+		Serial.print("away");
+	} else {
+		Serial.print("stay");
+	}
+	Serial.print("; ignore faults: ");
+	if (exit_delay) {
+		Serial.print("yes");
+	} else {
+		Serial.print("no");
+	}
+	Serial.print("; faulted: ");
+	if (fault) {
+		Serial.print("yes");
+	} else {
+		Serial.print("no");
+	}
+
+
+	
+	Serial.println();
+
+	if ( armed && fault && !exit_delay ) {
+		//on_alarm();
+		Serial.println ("F2: ALARM!");
 		//save gcbuf for debugging
 		strncpy(alarm_buf[0],  cbuf, 30);
-	} else if (alarm ==1) {
-		Serial.println ("alarm canceled");
+	} else if ( !armed  && fault  && away && !exit_delay) {
+		//away bit always flips to 0x02 when alarm is canceled
+		Serial.println ("F2: alarm canceled");
 	} else {
-		Serial.println ("no alarm");
+		Serial.println ("F2: no alarm");
 	}
+
+	//#ifdef DEBUG_STATUS
+	//DEBUG
+	//debug_cbuf(cbuf, idx, false);
+	//#endif
+
 
 	memset(cbuf, 0, sizeof(cbuf));
 	*idx = 0;
@@ -391,9 +456,18 @@ void on_status(char cbuf[], int *idx) {
 
 void on_display(char cbuf[], int *idx) {
 
+	Serial.print("F7: {");
+	for (int x = 1; x < 11 -1; x++) {
+		print_hex( cbuf[x], 8);
+		Serial.print(",");
+	}
+	Serial.print (" chksm: ");
+	print_hex( cbuf[*idx-1], 8 );
+	Serial.println ("}");
 
-	//first 8 bytes are headers
-	for (int x = 10; x < *idx -1; x++) {
+	//12-end is the body
+	Serial.print("F7: ");
+	for (int x = 12; x < *idx -1; x++) {
 		Serial.print ( cbuf[x] );
 	}
 
@@ -414,7 +488,7 @@ void on_ack(char cbuf[], int *idx) {
 
 	int kpadr = (int)cbuf[1];
 
-	Serial.print("Ack kp: ");
+	Serial.print("F6: kp ack addr = ");
 	Serial.println(kpadr, DEC);
 
 
@@ -510,7 +584,7 @@ void loop()
 
 	//key ack
 	if ((int)x == 0xFFFFFFF6) {
-		debug_cbuf(gcbuf, &gidx, true);
+		//debug_cbuf(gcbuf, &gidx, true);
 
 		gcbuf[ gidx ] = x;
 		gidx++;
@@ -523,7 +597,7 @@ void loop()
 
 	//state chage?
 	if ((int)x == 0xFFFFFFF2) {
-		debug_cbuf(gcbuf, &gidx, true);
+		//debug_cbuf(gcbuf, &gidx, true);
 
 		gcbuf[ gidx ] = x;
 		gidx++;
@@ -535,12 +609,11 @@ void loop()
 	}
 
 
-//   print_hex(x, 8);
    gcbuf[ gidx ] = x;
    gidx++;
 
 	if (gidx >= 30) {
-		Serial.print("Buffer overflow: ");
+		Serial.print("Unknown Buffer overflow: ");
 		debug_cbuf(gcbuf, &gidx, true);
 		return;
 	}
