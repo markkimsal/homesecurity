@@ -1,4 +1,4 @@
-# Arduino + Vista Home Security
+# VISTA ICM Replacement
 This project is designed to allow you to connect an Arduino-like device to your Honeywell (Ademco) security panel and "listen in" for key events.  This project is an implemenation of reverse engineering the Ademco ECP keypad bus.
 
 #Web Notifications
