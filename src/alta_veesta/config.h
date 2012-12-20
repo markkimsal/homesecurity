@@ -6,10 +6,16 @@
 //#define DEBUG_KEYS    0
 //#define DEBUG_DISPLAY 0
 
+
+#define RX_PIN 8
+#define TX_PIN 7
+
 //try to enable network and DHCP?
-#define HAVE_NETWORK 1
+//#define HAVE_NETWORK 1
 //#define USE_DHCP     1
-#define STATIC_IP  {192, 168, 2, 104}
+//#define STATIC_IP  {192, 168, 2, 104}
+
+#define MAC_ADDR { 0xB8, 0x70, 0xF4, 0x1E, 0xC5, 0x7E };
 
 // HTTP method is required for self-registering
 #define USE_HTTP 1

@@ -1,11 +1,17 @@
 /**
  * 
  */
+#include "alta_veesta.h"
+#include "util.h"
 
-int vistaIn = 8;
-int vistaOut = 3;
+int vistaIn  = RX_PIN;
+int vistaOut = TX_PIN;
+
 int msg_len_status = 45;
 int msg_len_ack = 4;
+
+int  serialStrIdx = 0;
+char serialIn[20];
 
 
 char gcbuf[30];
@@ -19,9 +25,8 @@ int  guidx = 0;
 
 #include "api_call.h"
 
+#include "out_wire.h"
 
-#include "alta_veesta.h"
-#include "config.h"
 
 
 #include "SoftwareSerial2.h"
@@ -30,10 +35,7 @@ SoftwareSerial vista(vistaIn, vistaOut, true);
 #include <SPI.h>
 #include <Ethernet.h>
 
-byte mac[] = { 0xB8, 0x70, 0xF4, 0x1E, 0xC5, 0x7E };
-//byte mac[] = { 0xF6, 0x75, 0x92, 0x78, 0x67, 0x3F };
-//b8:70:f4:1e:c5:7e
-
+byte mac[] = MAC_ADDR;
 
 int ledPin =  13;    // LED connected to digital pin 13
 int syncBuf = 0;
@@ -72,111 +74,6 @@ void blink_dhcp() {
 		delay(50);
 		digitalWrite(ledPin, LOW);
 		delay(50);
-	}
-}
-
-
-void print_hex(int v, int num_places)
-{
-    int mask=0, n, num_nibbles, digit;
-
-    for (n=1; n<=num_places; n++)
-    {
-        mask = (mask << 1) | 0x0001;
-    }
-    v = v & mask; // truncate v to specified number of places
-
-    num_nibbles = num_places / 4;
-    if ((num_places % 4) != 0)
-    {
-        ++num_nibbles;
-    }
-
-    do
-    {
-        digit = ((v >> (num_nibbles-1) * 4)) & 0x0f;
-        Serial.print(digit, HEX);
-    } while(--num_nibbles);
-
-}
-
-void print_binary(int v, int num_places)
-{
-    int mask=0, n;
-
-    for (n=1; n<=num_places; n++)
-    {
-        mask = (mask << 1) | 0x0001;
-    }
-    v = v & mask;  // truncate v to specified number of places
-
-    while(num_places)
-    {
-
-        if (v & (0x0001 << num_places-1))
-        {
-             Serial.print("1");
-        }
-        else
-        {
-             Serial.print("0");
-        }
-
-        --num_places;
-        if(((num_places%4) == 0) && (num_places != 0))
-        {
-            Serial.print("-");
-        }
-    }
-}
-
-
-void debug_cbuf(char cbuf[], int *idx, bool clear) 
-{
-	if (*idx == 0) {
-		return;
-	}
-
-	Serial.println();
-
-	//print printable ASCII
-	for(int x =0; x < *idx; x++) {
-		if ((int)cbuf[x] < 32 || (int)cbuf[x] > 126) {
-			Serial.print(" ");
-			//Serial.print(cbuf[x], DEC);
-		} else {
-//			Serial.print( " ");
-			Serial.print( cbuf[x] );
-		}
-		Serial.print(",");
-	}
-	Serial.println();
-
-	//print HEX
-	for(int x =0; x < *idx; x++) {
-		print_hex( cbuf[x], 8);
-		Serial.print(",");
-	}
-	Serial.println();
-
-	//print binary
-	for(int x = 0; x < *idx; x++) {
-		print_binary( cbuf[x], 8);
-		Serial.print(",");
-	}
-	Serial.println();
-
-
-/*
-	Serial.print("size of cbuf: ");
-	Serial.println(sizeof(cbuf), DEC);
-	Serial.print("idx: ");
-	Serial.println(*idx, DEC);
-*/
-
-	if (clear) {
-		memset(cbuf, 0, sizeof(cbuf));
-		*idx = 0;
 	}
 }
 
