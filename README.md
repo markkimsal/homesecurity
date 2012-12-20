@@ -1,5 +1,5 @@
 # Arduino + Vista Home Security
-This project is designed to allow you to connect an Arduino-like device to your Honeywell (Ademco) security panel and "listen in" for key events.
+This project is designed to allow you to connect an Arduino-like device to your Honeywell (Ademco) security panel and "listen in" for key events.  This project is an implemenation of reverse engineering the Ademco ECP keypad bus.
 
 #Web Notifications
 You can configure this project to ping a web server with any message you want when an alarm occurs.  This allows you to use a more powerful server to give you access to more powerful communication options (SMS, Email over SSL/STARTTLS, HTTPS, etc.)
@@ -14,3 +14,13 @@ If you're in the U.S you can get everything you need from Radio Shack.  Pick up 
 
 #License
 This project users some parts of Arduino IDE - specifically the SoftwareSerial library.  So, whatever license that is under, this project is under (for the time being).
+
+#Credits
+I could not have cracked the nut of Vista ECP protocol without knowing that it was possible by reading Miguel Sanchez's article in Circuit Cellar.  Although he did not process signals sent from the panel, he figured out the baud rate, stop bit configuration, and the fact that the signal is inversed (0 is high, 1 is low).
+
+Other projects that were invaluable to me are:
+
+* Arduino SUMP analyzer firmware:
+  * [http://github.com/gillham/logic_analyzer]
+* Open Logic Sniffer (desktop):
+  * [http://www.lxtreme.nl/ols/]
