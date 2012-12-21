@@ -12,6 +12,32 @@ You can also setup your web server configuration in the config.h file.  The proc
 #Hardware Setup
 If you're in the U.S you can get everything you need from Radio Shack.  Pick up an Arduino, an Ethernet Shield, a Proto Shield (or a breadboard), 2 5v regulators, some resistors, some wire, some soldering equipment.  Power the Arduino device from the keypad 12 volt wire by putting the keypad 12 volt wire into the 5v regulator and connect the output to the Arduino 5 volt in pin.  Connect the grounds.  Connect the data-out wire (yellow) to another 5 volt regulator and put the output of this regulator to pin 8 on the Arduino.  Connect the data in wire (green) to pin 7.  Ground the Arduino to the keypad ground wire (black).
 
+#Protocol
+Essentially, the data out wire uses 8-bit, even parity, 1 stop bit, inverted, NRZ +12 volt TTL signals.  But, the data out wire also acts somewhat like a clock wire sometimes.  
+
+Regular messages are transmitted periodically and begin with either F7 or F2.  F7 messages are fixed length, F2 are dynamic length.  Both message types consist of a header and a body section.  The second by of F2 messages indicate the remaining bytes for said message.
+
+When behaving as a clock wire, the panel will pull the line low for an extended period of time (&gt;10ms).  When this happens, any device that has data to send should pusle a response.  If the panel selects that device (in case there are multiple devices needing to send data) an F6 will be broadcast on the data out wire with the address of the device which should send data.  F6 messages behave like normal serial data.
+
+
+##Pulsing
+In order to avoid "open circuit" errors, every device periodically sends their device address to the panel.  This happens after F7 messages, and as a response to input querying from the panel.
+
+Pulsing doesn't exactly match up with serial data.  Timing is handled by synchronizing to rising edges sent from the server.  This can be faked by sending a 0xFF byte because the start bit will raise the line for a short time, and all the 1s will bring the line low (because the data signals are inverted).  There doesn't seem to be any parity bits sent during this pusling phase.
+
+When multiple devices ack, their pulses should coincide.  The result is that the last bit is ANDed together.
+
+Address 16 - 11111110  (inverted on the wire looks like 00000001)
+Address 21 - 11011111  (inverted on the wire looks like 00100000)
+Together on the wire they look like a single byte of    00100001 0x21
+
+In order to get perfect AND logic from multiple devices sending pulses at the same time, they must pulse a start bit and no data (0xFF) twice before sending their address bit mask.  When the line is pulled low for more than 12 ms, and a keypad has some information to transmit, this pulsing should synchronize with the rising edges from the panel.
+
+
+    (high)---\___(10ms low)___/---\______/---\_______/---\_____   (Yellow data-out)
+    
+    __________________________/\_________/\___________/\_/\_____  (0xFF, 0xFF, 0xEF) (Green)
+
 #License
 This project users some parts of Arduino IDE - specifically the SoftwareSerial library.  So, whatever license that is under, this project is under (for the time being).
 
