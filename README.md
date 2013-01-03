@@ -34,12 +34,12 @@ Together on the wire they look like a single byte of    00100001 0x21
 In order to get perfect AND logic from multiple devices sending pulses at the same time, they must pulse a start bit and no data (0xFF) twice before sending their address bit mask.  When the line is pulled low for more than 12 ms, and a keypad has some information to transmit, this pulsing should synchronize with the rising edges from the panel.
 
 
-    (high)---\___(10ms low)___/---\______/---\_______/---\_____   (Yellow data-out)
+    (high)---\___(10ms low)___/---\______/---\_______/---\_____  (Yellow data-out)
     
-    __________________________/\_________/\___________/\_/\_____  (0xFF, 0xFF, 0xEF) (Green)
+    __________________________/\_________/\__________/\_/\_____  (0xFF, 0xFF, 0xEF) (Green)
 
 #License
-This project users some parts of Arduino IDE - specifically the SoftwareSerial library.  So, whatever license that is under, this project is under (for the time being).
+This project uses some parts of Arduino IDE - specifically the SoftwareSerial library.  So, whatever license that is under, this project is under (for the time being).
 
 #Credits
 I could not have cracked the nut of Vista ECP protocol without knowing that it was possible by reading Miguel Sanchez's article in Circuit Cellar.  Although he did not process signals sent from the panel, he figured out the baud rate, stop bit configuration, and the fact that the signal is inversed (0 is high, 1 is low).
