@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <title>Homesecurity by markkimsal</title>
+  </head>
+
+  <body>
+    <header>
+      <div class="inner">
+        <h1>Homesecurity</h1>
+        <h2>VISTA ICM replacement: Adruino firmware for Honeywell / Ademco Vista series security panels</h2>
+        <a href="https://github.com/markkimsal/homesecurity" class="button"><small>View project on</small>GitHub</a>
+      </div>
+    </header>
+
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          <h1>VISTA ICM Replacement</h1>
+
+<p>This project is designed to allow you to connect an Arduino-like device to your Honeywell (Ademco) security panel and "listen in" for key events.  This project is an implemenation of reverse engineering the Ademco ECP keypad bus.</p>
+
+<h1>Web Notifications</h1>
+
+<p>You can configure this project to ping a web server with any message you want when an alarm occurs.  This allows you to use a more powerful server to give you access to more powerful communication options (SMS, Email over SSL/STARTTLS, HTTPS, etc.) </p>
+
+<h1>Config</h1>
+
+<p>There are a few configurations available.  Most simply print CSV (Excel) compatible debugging of each signal.  Signals are decoded in ASCII, decimal, and hexidecimal values and printed to the serial port as comma separated (the last item has an extra comma after it, it's not missing data) </p>
+
+<p>You can also setup your web server configuration in the config.h file.  The processing power on the Arduino is limited so you cannot do SSL or even e-mail (because most gateways require TLS wrapped SMTP connections).  Sending a small packet to a web server allows you to extend the capabilities of the Arduino with a more powerful CPU.</p>
+
+<h1>Hardware Setup</h1>
+
+<p>If you're in the U.S you can get everything you need from Radio Shack.  Pick up an Arduino, an Ethernet Shield, a Proto Shield (or a breadboard), 2 5v regulators, some resistors, some wire, some soldering equipment.  Power the Arduino device from the keypad 12 volt wire by putting the keypad 12 volt wire into the 5v regulator and connect the output to the Arduino 5 volt in pin.  Connect the grounds.  Connect the data-out wire (yellow) to another 5 volt regulator and put the output of this regulator to pin 8 on the Arduino.  Connect the data in wire (green) to pin 7.  Ground the Arduino to the keypad ground wire (black).</p>
+
+<h1>Protocol</h1>
+
+<p>Essentially, the data out wire uses 8-bit, even parity, 1 stop bit, inverted, NRZ +12 volt TTL signals.  But, the data out wire also acts somewhat like a clock wire sometimes.</p>
+
+<p>Regular messages are transmitted periodically and begin with either F7 or F2.  F7 messages are fixed length, F2 are dynamic length.  Both message types consist of a header and a body section.  The second by of F2 messages indicate the remaining bytes for said message.</p>
+
+<p>When behaving as a clock wire, the panel will pull the line low for an extended period of time (&gt;10ms).  When this happens, any device that has data to send should pusle a response.  If the panel selects that device (in case there are multiple devices needing to send data) an F6 will be broadcast on the data out wire with the address of the device which should send data.  F6 messages behave like normal serial data.</p>
+
+<h2>Pulsing</h2>
+
+<p>In order to avoid "open circuit" errors, every device periodically sends their device address to the panel.  This happens after F7 messages, and as a response to input querying from the panel.</p>
+
+<p>Pulsing doesn't exactly match up with serial data.  Timing is handled by synchronizing to rising edges sent from the server.  This can be faked by sending a 0xFF byte because the start bit will raise the line for a short time, and all the 1s will bring the line low (because the data signals are inverted).  There doesn't seem to be any parity bits sent during this pusling phase.</p>
+
+<p>When multiple devices ack, their pulses should coincide.  The result is that the last bit is ANDed together.</p>
+
+<p>Address 16 - 11111110  (inverted on the wire looks like 00000001)
+Address 21 - 11011111  (inverted on the wire looks like 00100000)
+Together on the wire they look like a single byte of    00100001 0x21</p>
+
+<p>In order to get perfect AND logic from multiple devices sending pulses at the same time, they must pulse a start bit and no data (0xFF) twice before sending their address bit mask.  When the line is pulled low for more than 12 ms, and a keypad has some information to transmit, this pulsing should synchronize with the rising edges from the panel.</p>
+
+<pre><code>(high)---\___(10ms low)___/---\______/---\_______/---\_____  (Yellow data-out)
+
+__________________________/\_________/\__________/\_/\_____  (0xFF, 0xFF, 0xEF) (Green)
+</code></pre>
+
+<h1>License</h1>
+
+<p>This project uses some parts of Arduino IDE - specifically the SoftwareSerial library.  So, whatever license that is under, this project is under (for the time being).</p>
+
+<h1>Credits</h1>
+
+<p>I could not have cracked the nut of Vista ECP protocol without knowing that it was possible by reading Miguel Sanchez's article in Circuit Cellar.  Although he did not process signals sent from the panel, he figured out the baud rate, stop bit configuration, and the fact that the signal is inversed (0 is high, 1 is low).</p>
+
+<p>Other projects that were invaluable to me are:</p>
+
+<ul>
+<li>Arduino SUMP analyzer firmware:
+
+<ul>
+<li>[<a href="http://github.com/gillham/logic_analyzer">http://github.com/gillham/logic_analyzer</a>]</li>
+</ul>
+</li>
+<li>Open Logic Sniffer (desktop):
+
+<ul>
+<li>[<a href="http://www.lxtreme.nl/ols/">http://www.lxtreme.nl/ols/</a>]</li>
+</ul>
+</li>
+</ul>
+        </section>
+
+        <aside id="sidebar">
+          <a href="https://github.com/markkimsal/homesecurity/zipball/master" class="button">
+            <small>Download</small>
+            .zip file
+          </a>
+          <a href="https://github.com/markkimsal/homesecurity/tarball/master" class="button">
+            <small>Download</small>
+            .tar.gz file
+          </a>
+
+          <p class="repo-owner"><a href="https://github.com/markkimsal/homesecurity"></a> is maintained by <a href="https://github.com/markkimsal">markkimsal</a>.</p>
+
+          <p>This page was generated by <a href="pages.github.com">GitHub Pages</a> using the Architect theme by <a href="http://twitter.com/jasonlong">Jason Long</a>.</p>
+        </aside>
+      </div>
+    </div>
+
+  
+  </body>
+</html>
