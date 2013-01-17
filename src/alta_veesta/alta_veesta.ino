@@ -23,6 +23,16 @@ char alarm_buf[3][30];
 char guibuf[100];
 int  guidx = 0;
 
+// Used to read bits on F7 message
+int const BIT_MASK_BYTE1_BEEP = 0x03;
+
+int const BIT_MASK_BYTE2_ARMED_HOME = 0x80;
+int const BIT_MASK_BYTE2_READY = 0x10;
+
+int const BIT_MASK_BYTE3_CHIME_MODE = 0x20;
+int const BIT_MASK_BYTE3_AC_POWER = 0x08;
+int const BIT_MASK_BYTE3_ARMED_AWAY = 0x04;
+
 #include "api_call.h"
 
 #include "out_wire.h"
@@ -352,11 +362,95 @@ void on_status(char cbuf[], int *idx) {
 }
 
 void on_display(char cbuf[], int *idx) {
-
-	Serial.print("F7: {");
-	for (int x = 1; x < 11 -1; x++) {
-		print_hex( cbuf[x], 8);
-		Serial.print(",");
+    // first 4 bytes are addresses of intended keypads to display this message
+    // from left to right MSB to LSB
+    // 5th byte represent zone
+    // 6th binary encoded data including beeps
+    // 7th binary encoded data including status armed mode
+    // 8th binary encoded data including ac power chime
+    // 9th byte Programming mode = 0x01
+    // 10th byte promt position in the display message of the expected input
+    Serial.print("F7: {");
+    for (int x = 1; x < 11 -1; x++) {
+        switch ( x ) {
+            case 1:
+                Serial.print(" addr1: ");
+                print_hex( cbuf[x], 8);
+    	        Serial.print(",");
+                break;
+            case 2:
+                Serial.print(" addr2: ");
+                print_hex( cbuf[x], 8);
+                Serial.print(",");
+                break;
+            case 3:
+                Serial.print(" addr3: ");
+                print_hex( cbuf[x], 8);
+                Serial.print(",");
+                break;
+            case 4:
+                Serial.print(" addr4: ");
+                print_hex( cbuf[x], 8);
+                Serial.print(",");
+                break;
+            case 5:
+                Serial.print(" zone: ");
+                print_hex( cbuf[x], 8);
+                Serial.print(",");
+                break;
+            case 6:
+                if ( cbuf[x] & BIT_MASK_BYTE1_BEEP ) > 0 ) {
+                    Serial.print(" BEEPS: ");
+                    print_hex( cbuf[x], 8);
+                    Serial.print(",");
+                }
+                break;
+            case 7:
+                if ( cbuf[x] & BIT_MASK_BYTE2_ARMED_HOME ) > 0 ) {
+                    Serial.print(" ARMED_HOME: ");
+                }
+                if ( cbuf[x] & BIT_MASK_BYTE2_READY ) > 0 ) {
+                    Serial.print(" READY: ");
+                }
+                print_hex( cbuf[x], 8);
+                Serial.print(",");
+                break;
+            case 8:
+                if ( cbuf[x] & BIT_MASK_BYTE3_CHIME_MODE ) > 0 ) {
+                    Serial.print(" CHIME_MODE: ");
+                }
+                if ( cbuf[x] & BIT_MASK_BYTE3_AC_POWER ) > 0 ) {
+                    Serial.print(" AC_POWER: ");
+                }
+                if ( cbuf[x] & BIT_MASK_BYTE3_ARMED_AWAY ) > 0 ) {
+                    Serial.print(" ARMED_AWAY: ");
+                }
+                print_hex( cbuf[x], 8);
+                Serial.print(",");
+                break;
+	    case 9:
+                if ( cbuf[x] == 0x01 ) {
+                    Serial.print(" PROGRAMMING MODE: ");
+                }     
+                
+                print_hex( cbuf[x], 8);
+                Serial.print(",");
+                break;
+	    case 10:
+                if ( cbuf[x] != 0x00 ) {
+                    Serial.print(" PROMPT POS: ");
+		    Serial.print( (int)cbuf[x] );
+                }     
+                
+                print_hex( cbuf[x], 8);
+                Serial.print(",");
+                break;
+            default:
+                print_hex( cbuf[x], 8);
+                Serial.print(",");
+                break;
+            }
+		
 	}
 	Serial.print (" chksm: ");
 	print_hex( cbuf[*idx-1], 8 );
