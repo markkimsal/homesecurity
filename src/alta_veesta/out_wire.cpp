@@ -1,0 +1,127 @@
+#include "config.h"
+#include "api_call.h"
+
+#include "SoftwareSerial2.h"
+
+#include "util.h"
+
+/* static */ 
+inline void tunedDelay(uint16_t delay) { 
+  uint8_t tmp=0;
+
+  asm volatile("sbiw    %0, 0x01 \n\t"
+    "ldi %1, 0xFF \n\t"
+    "cpi %A0, 0xFF \n\t"
+    "cpc %B0, %1 \n\t"
+    "brne .-10 \n\t"
+    : "+r" (delay), "+a" (tmp)
+    : "0" (delay)
+    );
+}
+
+
+
+int seq = 1;
+
+void ask_for_write(
+		SoftwareSerial &vistaSerial
+){
+
+	vistaSerial.write(0xff);
+	vistaSerial.write(0xff);
+	vistaSerial.write(0xfb);
+}
+
+
+/**
+ * Send 0-9, # and * characters
+ * 1,2,3,4,5,6,7,8,9,0,#,*,
+ * 31,32,33,34,35,36,37,38,39,30,23,2A,
+ * 0011-0001,0011-0010,0011-0011,0011-0100,0011-0101,0011-0110,0011-0111,0011-1000,0011-1001,0011-0000,0010-0011,0010-1010,
+ *
+ */
+void write_chars(
+		SoftwareSerial &vistaSerial,
+	   	char cbuf[],
+	   	int *idx,
+	   	bool clear
+){
+
+	if (*idx == 0) {return;}
+
+	int header = ((++seq << 6) & 0xc0) | (18 & 0x3F);
+
+	//print_hex((int)header, 8);
+
+
+	/*
+	print_hex((int)*idx +1, 8);    Serial.println();
+	//debug_cbuf(cbuf, idx, true);
+	print_hex((int) (0x100-(header+checksum+ *idx+1)) , 8);  Serial.println();
+	*/
+
+	//Serial.println("Writing out");
+	//debug_cbuf(cbuf, idx, false);
+
+	/*
+	digitalWrite(TX_PIN, HIGH);
+	delay(5);
+	digitalWrite(TX_PIN, LOW);
+	return;
+	*/
+	//header is the bit mask YYXX-XXXX
+	//	where YY is an incrementing sequence number
+	//	and XX-XXXX is the keypad address (decimal 16-31)
+	//int header = 18 & 0x3F;
+
+	vistaSerial.write((int)header);
+	vistaSerial.flush();
+
+	vistaSerial.write((int) *idx +1);
+	vistaSerial.flush();
+
+	print_hex((int)header, 8);
+	Serial.println();
+	//Serial.println(*idx, DEC);
+	//adjust characters to hex values.
+	//ASCII numbers get translated to hex numbers
+	//# and * get converted to 0xA and 0xB
+	// send any other chars straight, although this will probably 
+	// result in errors
+	int checksum = 0;
+	for(int x =0; x < *idx; x++) {
+		if (cbuf[x] >= 0x30 && cbuf[x] <= 0x39) {
+			cbuf[x] -= 0x30;
+			checksum += cbuf[x];
+
+			vistaSerial.write((int)cbuf[x]);
+			vistaSerial.flush();
+		}
+		if (cbuf[x] == 0x23) {
+			cbuf[x] = 0x0B;
+			checksum += cbuf[x];
+			vistaSerial.write((int)cbuf[x]);
+			vistaSerial.flush();
+		}
+		if (cbuf[x] == 0x2A) {
+			cbuf[x] = 0x0A;
+			checksum += cbuf[x];
+			vistaSerial.write((int)cbuf[x]);
+			vistaSerial.flush();
+		}
+	}
+
+	print_hex((int)*idx + 1, 8);
+	for(int x =0; x < *idx; x++) {
+	print_hex((int)cbuf[x], 8);
+	}
+	int chksum = 0x100 - (header + checksum + (int)*idx+1);
+
+	vistaSerial.write((int) (0x100-(header+checksum+ *idx+1)) );
+	vistaSerial.flush();
+
+	print_hex((int)chksum, 8);
+    Serial.println();
+}
+
+

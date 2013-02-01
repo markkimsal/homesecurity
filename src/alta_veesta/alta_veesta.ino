@@ -3,20 +3,23 @@
  */
 #include "alta_veesta.h"
 #include "util.h"
+#include <avr/interrupt.h>
 
 int vistaIn  = RX_PIN;
 int vistaOut = TX_PIN;
 
 int msg_len_status = 45;
-int msg_len_ack = 4;
+int msg_len_ack = 2;
 
 int  serialStrIdx = 0;
 char serialIn[20];
 
+int  seq_poll = 0;
 
 char gcbuf[30];
 int  gidx = 0;
 int  lastgidx = 0;
+
 
 char alarm_buf[3][30];
 
@@ -32,6 +35,11 @@ int const BIT_MASK_BYTE2_READY = 0x10;
 int const BIT_MASK_BYTE3_CHIME_MODE = 0x20;
 int const BIT_MASK_BYTE3_AC_POWER = 0x08;
 int const BIT_MASK_BYTE3_ARMED_AWAY = 0x04;
+
+extern unsigned long low_time = 0;
+bool   mid_msg = false;
+bool   hav_msg = false;
+bool   mid_ack = false;
 
 #include "api_call.h"
 
@@ -71,9 +79,9 @@ void blink_alive() {
 
 	for (int x=0; x < 3; x++) {
 		digitalWrite(ledPin, HIGH);
-		delay(200);
+		delay(100);
 		digitalWrite(ledPin, LOW);
-		delay(200);
+		delay(100);
 	}
 }
 
@@ -133,13 +141,27 @@ void read_chars_dyn(char buf[], int *idx, int limit)
 	*idx = idxval;
 }
 
+void read_chars_single(char buf[], int *idx) 
+{
+	char c;
+	int  x=0;
+	int idxval = *idx;
+	while (!vista.available()) { tunedDelay(1); }
+
+	c = vista.read();
+	buf[ idxval ] = c;
+	idxval++;
+	x++;
+	*idx = idxval;
+}
 void read_chars(int ct, char buf[], int *idx, int limit) 
 {
 	char c;
 	int  x=0;
 	int idxval = *idx;
-	digitalWrite(ledPin, HIGH);   // set the LED on  
+	//digitalWrite(ledPin, HIGH);   // set the LED on  
 	while (x < ct) {
+
 		if (vista.available()) {
 			c = vista.read();
 			if (idxval >= limit) {
@@ -153,10 +175,9 @@ void read_chars(int ct, char buf[], int *idx, int limit)
 			buf[ idxval ] = c;
 			idxval++;
 			x++;
-			//tunedDelay(430);
 		}
 	}
-	digitalWrite(ledPin, LOW); 
+	//digitalWrite(ledPin, LOW); 
 	*idx = idxval;
 }
 
@@ -371,87 +392,11 @@ void on_display(char cbuf[], int *idx) {
     // 9th byte Programming mode = 0x01
     // 10th byte promt position in the display message of the expected input
     Serial.print("F7: {");
-    for (int x = 1; x < 11 -1; x++) {
-        switch ( x ) {
-            case 1:
-                Serial.print(" addr1: ");
-                print_hex( cbuf[x], 8);
-    	        Serial.print(",");
-                break;
-            case 2:
-                Serial.print(" addr2: ");
-                print_hex( cbuf[x], 8);
-                Serial.print(",");
-                break;
-            case 3:
-                Serial.print(" addr3: ");
-                print_hex( cbuf[x], 8);
-                Serial.print(",");
-                break;
-            case 4:
-                Serial.print(" addr4: ");
-                print_hex( cbuf[x], 8);
-                Serial.print(",");
-                break;
-            case 5:
-                Serial.print(" zone: ");
-                print_hex( cbuf[x], 8);
-                Serial.print(",");
-                break;
-            case 6:
-                if ( cbuf[x] & BIT_MASK_BYTE1_BEEP ) > 0 ) {
-                    Serial.print(" BEEPS: ");
-                    print_hex( cbuf[x], 8);
-                    Serial.print(",");
-                }
-                break;
-            case 7:
-                if ( cbuf[x] & BIT_MASK_BYTE2_ARMED_HOME ) > 0 ) {
-                    Serial.print(" ARMED_HOME: ");
-                }
-                if ( cbuf[x] & BIT_MASK_BYTE2_READY ) > 0 ) {
-                    Serial.print(" READY: ");
-                }
-                print_hex( cbuf[x], 8);
-                Serial.print(",");
-                break;
-            case 8:
-                if ( cbuf[x] & BIT_MASK_BYTE3_CHIME_MODE ) > 0 ) {
-                    Serial.print(" CHIME_MODE: ");
-                }
-                if ( cbuf[x] & BIT_MASK_BYTE3_AC_POWER ) > 0 ) {
-                    Serial.print(" AC_POWER: ");
-                }
-                if ( cbuf[x] & BIT_MASK_BYTE3_ARMED_AWAY ) > 0 ) {
-                    Serial.print(" ARMED_AWAY: ");
-                }
-                print_hex( cbuf[x], 8);
-                Serial.print(",");
-                break;
-	    case 9:
-                if ( cbuf[x] == 0x01 ) {
-                    Serial.print(" PROGRAMMING MODE: ");
-                }     
-                
-                print_hex( cbuf[x], 8);
-                Serial.print(",");
-                break;
-	    case 10:
-                if ( cbuf[x] != 0x00 ) {
-                    Serial.print(" PROMPT POS: ");
-		    Serial.print( (int)cbuf[x] );
-                }     
-                
-                print_hex( cbuf[x], 8);
-                Serial.print(",");
-                break;
-            default:
-                print_hex( cbuf[x], 8);
-                Serial.print(",");
-                break;
-            }
-		
+    for (int x = 1; x <= 11 ; x++) {
+         print_hex( cbuf[x], 8);
+         Serial.print(",");
 	}
+
 	Serial.print (" chksm: ");
 	print_hex( cbuf[*idx-1], 8 );
 	Serial.println ("}");
@@ -464,6 +409,96 @@ void on_display(char cbuf[], int *idx) {
 
 	Serial.println();
 
+	Serial.print("F7: ");
+    for (int x = 1; x <= 11 ; x++) {
+        switch ( x ) {
+            case 1:
+                Serial.print(" addr1: ");
+                print_hex( cbuf[x], 8);
+    	        Serial.print(";");
+                break;
+            case 2:
+                Serial.print(" addr2: ");
+                print_hex( cbuf[x], 8);
+                Serial.print(";");
+                break;
+            case 3:
+                Serial.print(" addr3: ");
+                print_hex( cbuf[x], 8);
+                Serial.print(";");
+                break;
+            case 4:
+                Serial.print(" addr4: ");
+                print_hex( cbuf[x], 8);
+                Serial.print(";");
+                break;
+            case 5:
+                Serial.print(" zone: ");
+                print_hex( cbuf[x], 8);
+                Serial.print(";");
+                break;
+            case 6:
+                if ( (cbuf[x] & BIT_MASK_BYTE1_BEEP ) > 0 ) {
+                    Serial.print(" BEEPS: ");
+                    print_hex( cbuf[x], 8);
+                    Serial.print(";");
+                }
+                break;
+            case 7:
+                if ( (cbuf[x] & BIT_MASK_BYTE2_ARMED_HOME ) ) {
+                    Serial.print(" ARMED_STAY: true;");
+                } else {
+                    Serial.print(" ARMED_STAY: false;");
+				}
+                if ( (cbuf[x] & BIT_MASK_BYTE2_READY )) {
+                    Serial.print(" READY: true;");
+				} else {
+                    Serial.print(" READY: false;");
+                }
+//                print_hex( cbuf[x], 8);
+                break;
+            case 8:
+                if ( (cbuf[x] & BIT_MASK_BYTE3_CHIME_MODE ) ) {
+                    Serial.print(" CHIME_MODE: on;");
+				} else {
+                    Serial.print(" CHIME_MODE: off;");
+                }
+                if ( (cbuf[x] & BIT_MASK_BYTE3_AC_POWER ) ) {
+                    Serial.print(" AC_POWER: on;");
+				} else {
+                    Serial.print(" AC_POWER: off;");
+                }
+                if ( (cbuf[x] & BIT_MASK_BYTE3_ARMED_AWAY ) > 0 ) {
+                    Serial.print(" ARMED_AWAY: true;");
+				} else {
+                    Serial.print(" ARMED_AWAY: false;");
+                }
+//                print_hex( cbuf[x], 8);
+                break;
+	    case 9:
+                if ( cbuf[x] == 0x01 ) {
+                    Serial.print(" PROGRAMMING MODE: ");
+					print_hex( cbuf[x], 8);
+					Serial.print(";");
+                }     
+                break;
+	    case 10:
+                if ( cbuf[x] != 0x00 ) {
+                    Serial.print("PROMPT POS: ");
+				    Serial.print( (int)cbuf[x] );
+                }     
+                
+                print_hex( cbuf[x], 8);
+                Serial.print(";");
+                break;
+            default:
+//                print_hex( cbuf[x], 8);
+//                Serial.print(";");
+                break;
+            }
+	}
+	Serial.println();
+		
 	//DEBUG
 	#ifdef DEBUG_DISPLAY
 	debug_cbuf(cbuf, idx, false);
@@ -474,70 +509,146 @@ void on_display(char cbuf[], int *idx) {
 	*idx = 0;
 }
 
+void on_poll() {
+
+	if ( hav_msg == 0 ) return;
+	vista.setParity(false);
+
+	vista.write(0xff);
+
+    uint8_t oldSREG = SREG;
+    cli();
+
+
+//	vista.setParity(true);
+
+
+	seq_poll++;
+	if (seq_poll > 3) {
+		seq_poll = 1;
+	}
+
+
+
+	tunedDelay(236 * 4);
+	tunedDelay(236 * 4.60);
+
+	vista.write(0xff);
+
+	tunedDelay(236 * 4);
+	tunedDelay(236 * 4.8);
+
+	vista.write(0xFB);
+/*
+	while(vista.rx_pin_read()) { tunedDelay(30); }
+	while(!vista.rx_pin_read()) { tunedDelay(30); }
+*/
+
+	vista.tx_pin_write( LOW );
+    SREG = oldSREG;
+	return;
+}
+
 void on_ack(char cbuf[], int *idx) {
 
-
-	int kpadr = (int)cbuf[1];
-
-	Serial.print("F6: kp ack addr = ");
-	Serial.println(kpadr, DEC);
-
+	//write_chars( vista, serialIn, &serialStrIdx, true );
+	hav_msg = 0;
+	//clear serialIn buffer
+	memset(serialIn,0,sizeof(serialIn));
+	serialStrIdx = 0;
 
 	#ifdef DEBUG_KEYS
 	//DEBUG
-	debug_cbuf(cbuf, idx, false);
+//	debug_cbuf(cbuf, idx, false);
 	#endif
+
+	int kpadr = (int)cbuf[1];
+//	Serial.print("F6: kp ack addr = ");
+//	Serial.println(kpadr, DEC);
 
 	//clear memroy
 	memset(cbuf, 0, sizeof(cbuf));
 	*idx = 0;
-
 }
 
 void on_debug() {
 	int tmp_idx = 29;
-	debug_cbuf(alarm_buf[0], &tmp_idx, false);
+	//debug_cbuf(alarm_buf[0], &tmp_idx, false);
 }
 
 void readConsole() {
 
-	int serialStrIdx;
-	int inByte = 0;
-	char serialIn[50];
 	const int termChar = 13; //Terminate lines with CR
+	int inByte       = 0;
 
-	memset(serialIn,0,sizeof(serialIn));
-
-	inByte = Serial.read();
-
-        if (inByte < 0) return;
-
-//Serial.print("I received: ");
-//Serial.println(inByte, DEC);
-	serialStrIdx=0;
-
+	if (!Serial.available()) return;
 
 
 	//If we see data (inByte > 0) and that data isn't a carriage return
+	do {
+//Serial.print("Serial available ");
+		inByte = Serial.read();
+//Serial.print("I received: ");
+//Serial.println(inByte, DEC);
+		if (inByte < 0) break;
+		if (inByte == termChar) break;
+		if (serialStrIdx >= 20) break;
 
-	if (inByte > 0 && inByte != termChar) {
-		do {
-			if ( inByte == termChar ) break;
+		serialIn[serialStrIdx] = inByte; // Save the data in a character array
+		serialStrIdx++; //Increment position in array
+	} while (Serial.available());
 
-			serialIn[serialStrIdx] = inByte; // Save the data in a character array
-			serialStrIdx++; //Increment position in array
-			inByte = Serial.read(); // Read next byte
-		} while (serialStrIdx < 50);
-
+	if (inByte == termChar) {
 		serialIn[serialStrIdx] = 0; //Null terminate the serialIn
-	}
 
-Serial.println(serialIn);
-	//run commands
-	if (strncmp( serialIn, "debug", 5) == 0 ) {
-		on_debug();
+		//run commands
+		if (strncmp( serialIn, "debug", 5) == 0 ) {
+			on_debug();
+		} else {
+			//write_chars( vista, serialIn, &serialStrIdx, true );
+			//ask_for_write(vista);
+			hav_msg = 1;
+		}
+
 	}
 }
+
+void on_pin_change() {
+
+	if (mid_ack) return;
+
+	//high
+	if (!low_time && vista.rx_pin_read()) {
+		vista.recv();
+		mid_msg = false;
+		return;
+	}
+
+	if (mid_msg) {
+		vista.recv();
+		return;
+	}
+
+
+	//low
+	if (low_time) {
+		if ( (millis() - low_time) > 9) {
+
+			on_poll();
+			low_time=0;
+		} else {
+			//regular read
+			mid_msg = true;
+			vista.recv();
+			low_time=0;
+		}
+	} else {
+		low_time = millis();
+		mid_msg = false;
+	}
+}
+
+
 
 void loop()
 {
@@ -546,21 +657,21 @@ void loop()
 		if (lastgidx != gidx) {
 			debug_cbuf(gcbuf, &gidx, false);
 			lastgidx = gidx;
-//		      Serial.println(lastgidx);
-//		      Serial.println(gidx);
 		}
-                readConsole();
 
+        readConsole();
 		return;
 	}
+	low_time = 0;
 
 	char x;
 
-    x = vista.read();
-    if (!x)  {
-//      Serial.print(".");
-      return;
-    }
+	x = vista.read();
+	if (!x) {
+		//print_hex(x,8);
+		//Serial.println(".");
+		return;
+	}
 
 	//start of new message
 	if ((int)x == 0xFFFFFFF7) {
@@ -576,13 +687,26 @@ void loop()
 	//key ack
 	if ((int)x == 0xFFFFFFF6) {
 		//debug_cbuf(gcbuf, &gidx, true);
+		memset(gcbuf, 0, sizeof(gcbuf));
+		gidx = 0;
 
 		gcbuf[ gidx ] = x;
 		gidx++;
 
-		read_chars( msg_len_ack -1, gcbuf, &gidx, 30);
+		//read_chars( msg_len_ack , gcbuf, &gidx, 30);
+		read_chars_single(gcbuf, &gidx);
+		mid_ack = true;
+		vista.setParity(true);
+		tunedDelay(210);
+
+		//serialStrIdx = 1;
+		//serialIn[0] = 0x03;
+//Serial.println("write chars");
+		write_chars( vista, serialIn, &serialStrIdx, true );
+		mid_ack = false;
 
 		on_ack(gcbuf, &gidx);
+		vista.setParity(false);
 		return;
 	}
 
@@ -599,6 +723,10 @@ void loop()
 		return;
 	}
 
+Serial.print("Unknown char: ");
+Serial.print((char)x);
+print_hex((char)x, 8);
+Serial.println();
 
    gcbuf[ gidx ] = x;
    gidx++;
@@ -619,11 +747,16 @@ void send_email() {
 	EthernetClient client;
 }
 
-
 void setup()   {                
+
+
 	// initialize the digital pin as an output:
 	pinMode(ledPin, OUTPUT);     
 	blink_alive();
+
+	//clear serialIn buffer
+	memset(serialIn,0,sizeof(serialIn));
+	serialStrIdx = 0;
 
 	//initialize USB serial
 	Serial.begin(115200);
@@ -667,3 +800,12 @@ void setup()   {
 	Serial.println("Starting vista keypad bus"); 
 	vista.begin( vistaBaud );
 }
+
+#if defined(PCINT0_vect)
+ISR(PCINT0_vect)
+{
+  on_pin_change();
+}
+#endif
+
+

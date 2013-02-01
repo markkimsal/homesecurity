@@ -67,7 +67,8 @@ static const DELAY_TABLE PROGMEM table[] =
   { 19200,    54,        117,       117,      114,   },
   { 14400,    74,        156,       156,      153,   },
   { 9600,     114,       236,       236,      233,   },
-  { 4800,     245,       475,       475,      471,   },
+  //{ 4800,     233,       474,       474,      471,   },
+  { 4800,     233,       474,       474,      462,   },
   { 2400,     471,       950,       950,      947,   },
   { 1200,     947,       1902,      1902,     1899,  },
   { 300,      3804,      7617,      7617,     7614,  },
@@ -242,8 +243,9 @@ void SoftwareSerial::recv()
 //    DebugPulse(_DEBUG_PIN2, 1);
 
     // skip the second stop bit
-    tunedDelay(_rx_delay_stopbit);
+//    tunedDelay(_rx_delay_stopbit);
     DebugPulse(_DEBUG_PIN2, 1);
+
 
 
     if (_inverse_logic)
@@ -264,6 +266,9 @@ void SoftwareSerial::recv()
       _buffer_overflow = true;
     }
   }
+//tx_pin_write( HIGH );
+ //   tunedDelay(_rx_delay_stopbit/4);
+//tx_pin_write( LOW );
 
 #if GCC_VERSION < 40302
 // Work-around for avr-gcc 4.3.0 OSX version bug
@@ -308,10 +313,10 @@ inline void SoftwareSerial::handle_interrupt()
 }
 
 #if defined(PCINT0_vect)
-ISR(PCINT0_vect)
-{
-  SoftwareSerial::handle_interrupt();
-}
+//ISR(PCINT0_vect)
+//{
+ // SoftwareSerial::handle_interrupt();
+//}
 #endif
 
 #if defined(PCINT1_vect)
@@ -348,6 +353,7 @@ SoftwareSerial::SoftwareSerial(uint8_t receivePin, uint8_t transmitPin, bool inv
 {
   setTX(transmitPin);
   setRX(receivePin);
+  setParity(true);
 }
 
 //
@@ -361,7 +367,8 @@ SoftwareSerial::~SoftwareSerial()
 void SoftwareSerial::setTX(uint8_t tx)
 {
   pinMode(tx, OUTPUT);
-  digitalWrite(tx, HIGH);
+  //digitalWrite(tx, HIGH);
+  digitalWrite(tx, LOW);
   _transmitBitMask = digitalPinToBitMask(tx);
   uint8_t port = digitalPinToPort(tx);
   _transmitPortRegister = portOutputRegister(port);
@@ -381,6 +388,11 @@ void SoftwareSerial::setRX(uint8_t rx)
 //
 // Public methods
 //
+
+void SoftwareSerial::setParity(bool parity )
+{
+	_parity = parity;
+}
 
 void SoftwareSerial::begin(long speed)
 {
@@ -456,6 +468,8 @@ size_t SoftwareSerial::write(uint8_t b)
     return 0;
   }
 
+  byte parity = 0x0;
+
   uint8_t oldSREG = SREG;
   cli();  // turn off interrupts for a clean txmit
 
@@ -468,11 +482,14 @@ size_t SoftwareSerial::write(uint8_t b)
   {
     for (byte mask = 0x01; mask; mask <<= 1)
     {
-      if (b & mask) // choose bit
+      if (b & mask) { // choose bit
         tx_pin_write(LOW); // send 1
-      else
+	    parity = parity ^ 0x01;
+      } else {
         tx_pin_write(HIGH); // send 0
-    
+	    parity = parity ^ 0x00;
+      }
+
       tunedDelay(_tx_delay);
     }
 
@@ -482,10 +499,13 @@ size_t SoftwareSerial::write(uint8_t b)
   {
     for (byte mask = 0x01; mask; mask <<= 1)
     {
-      if (b & mask) // choose bit
+      if (b & mask) { // choose bit
         tx_pin_write(HIGH); // send 1
-      else
+	    parity = parity ^ 0x01;
+	  } else {
         tx_pin_write(LOW); // send 0
+	   // parity = parity ^ 0x00;
+      }
     
       tunedDelay(_tx_delay);
     }
@@ -493,8 +513,52 @@ size_t SoftwareSerial::write(uint8_t b)
     tx_pin_write(HIGH); // restore pin to natural state
   }
 
-  SREG = oldSREG; // turn interrupts back on
+
+  //parity stop bit
+  //even parity
+  if(_parity) {
+  if (parity == 0) { //even number of 1s
+    if (_inverse_logic) {
+	  //Serial.println("parity 0, send 0");
+      tx_pin_write(HIGH); // send 0
+    } else {
+      tx_pin_write(LOW); // send 0
+ //     tx_pin_write(LOW); // restore pin to natural state
+    }
+  } else {
+	  //Serial.println("parity 1");
+    if (_inverse_logic) {
+      tx_pin_write(LOW); // send 1
+    } else {
+      tx_pin_write(HIGH); // send 1
+//      tx_pin_write(HIGH); // restore pin to natural state
+    }
+  }
   tunedDelay(_tx_delay);
+  }
+
+  //stop bit
+  //tx_pin_write(_inverse_logic ? HIGH : LOW);
+  tx_pin_write(_inverse_logic ? LOW : HIGH);
+  tunedDelay(_tx_delay);
+
+  //3 stop bits
+  tunedDelay(_tx_delay);
+
+  tunedDelay(_tx_delay);
+
+  if (_inverse_logic) {
+    tx_pin_write(LOW); // restore pin to natural state
+  }else{
+    tx_pin_write(HIGH); // restore pin to natural state
+  }
+//  tunedDelay(_tx_delay);
+  /*
+  */
+
+
+
+  SREG = oldSREG; // turn interrupts back on
   
   return 1;
 }
