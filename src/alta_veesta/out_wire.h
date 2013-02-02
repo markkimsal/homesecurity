@@ -10,10 +10,7 @@
 #include "SoftwareSerial2.h"
 
 void write_chars(
-		SoftwareSerial &vistaSerial,
-	   	char cbuf[],
-	   	int *idx,
-	   	bool clear
+		SoftwareSerial &vistaSerial
 );
 
 
@@ -21,4 +18,11 @@ void ask_for_write(
 		SoftwareSerial &vistaSerial
 );
 
+void out_wire_queue(
+		char byte
+);
+
+bool have_message();
+
+void out_wire_init();
 #endif

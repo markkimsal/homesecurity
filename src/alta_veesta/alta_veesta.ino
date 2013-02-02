@@ -11,9 +11,6 @@ int vistaOut = TX_PIN;
 int msg_len_status = 45;
 int msg_len_ack = 2;
 
-int  serialStrIdx = 0;
-char serialIn[20];
-
 int  seq_poll = 0;
 
 char gcbuf[30];
@@ -38,7 +35,6 @@ int const BIT_MASK_BYTE3_ARMED_AWAY = 0x04;
 
 extern unsigned long low_time = 0;
 bool   mid_msg = false;
-bool   hav_msg = false;
 bool   mid_ack = false;
 
 #include "api_call.h"
@@ -511,7 +507,7 @@ void on_display(char cbuf[], int *idx) {
 
 void on_poll() {
 
-	if ( hav_msg == 0 ) return;
+	if ( !have_message() ) return;
 	vista.setParity(false);
 
 	vista.write(0xff);
@@ -551,11 +547,8 @@ void on_poll() {
 
 void on_ack(char cbuf[], int *idx) {
 
-	//write_chars( vista, serialIn, &serialStrIdx, true );
-	hav_msg = 0;
-	//clear serialIn buffer
-	memset(serialIn,0,sizeof(serialIn));
-	serialStrIdx = 0;
+	//hav_msg = 0;
+	out_wire_init();
 
 	#ifdef DEBUG_KEYS
 	//DEBUG
@@ -592,11 +585,10 @@ void readConsole() {
 //Serial.println(inByte, DEC);
 		if (inByte < 0) break;
 		if (inByte == termChar) break;
-		if (serialStrIdx >= 20) break;
 
-		serialIn[serialStrIdx] = inByte; // Save the data in a character array
-		serialStrIdx++; //Increment position in array
+		out_wire_queue(inByte);
 	} while (Serial.available());
+/*
 
 	if (inByte == termChar) {
 		serialIn[serialStrIdx] = 0; //Null terminate the serialIn
@@ -607,10 +599,11 @@ void readConsole() {
 		} else {
 			//write_chars( vista, serialIn, &serialStrIdx, true );
 			//ask_for_write(vista);
-			hav_msg = 1;
+			//hav_msg = 1;
 		}
 
 	}
+*/
 }
 
 void on_pin_change() {
@@ -655,7 +648,7 @@ void loop()
 
 	if (!vista.available()) {
 		if (lastgidx != gidx) {
-			debug_cbuf(gcbuf, &gidx, false);
+			//debug_cbuf(gcbuf, &gidx, false);
 			lastgidx = gidx;
 		}
 
@@ -699,10 +692,8 @@ void loop()
 		vista.setParity(true);
 		tunedDelay(210);
 
-		//serialStrIdx = 1;
-		//serialIn[0] = 0x03;
 //Serial.println("write chars");
-		write_chars( vista, serialIn, &serialStrIdx, true );
+		write_chars( vista );
 		mid_ack = false;
 
 		on_ack(gcbuf, &gidx);
@@ -724,7 +715,6 @@ void loop()
 	}
 
 Serial.print("Unknown char: ");
-Serial.print((char)x);
 print_hex((char)x, 8);
 Serial.println();
 
@@ -754,9 +744,12 @@ void setup()   {
 	pinMode(ledPin, OUTPUT);     
 	blink_alive();
 
+	out_wire_init();
+/*
 	//clear serialIn buffer
 	memset(serialIn,0,sizeof(serialIn));
 	serialStrIdx = 0;
+*/
 
 	//initialize USB serial
 	Serial.begin(115200);
