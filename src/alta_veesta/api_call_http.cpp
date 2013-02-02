@@ -74,6 +74,11 @@ void api_call_http(byte amsg_server[], char body[]) {
 	EthernetClient client;
 
 
+	if (!client) {
+		Serial.println("Ethernet client not available!");
+		return;
+	}
+
 	Serial.print("HTTP opening connection to ");
 	Serial.println(host);
 	/*

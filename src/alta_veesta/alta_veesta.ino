@@ -4,6 +4,9 @@
 #include "alta_veesta.h"
 #include "util.h"
 
+// for setting network timeout
+#include <utility/w5100.h>
+
 int vistaIn  = RX_PIN;
 int vistaOut = TX_PIN;
 
@@ -163,11 +166,15 @@ void read_chars(int ct, char buf[], int *idx, int limit)
 
 
 void on_alarm() {
+	#ifdef HAVE_NETWORK
 	api_call_alarm();
+	#endif
 }
 
 void on_init() {
+	#ifdef HAVE_NETWORK
 	api_call_init();
+	#endif
 }
 
 
@@ -640,6 +647,10 @@ void setup()   {
 		for(;;)
 		;
 	}
+	//3 second timeout
+	W5100.setRetransmissionTime(0x07D0);
+	W5100.setRetransmissionCount(3);
+
 	Serial.print("Got DHCP IP: ");
 	Serial.println(Ethernet.localIP()); 
 	#else
