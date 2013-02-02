@@ -8,7 +8,7 @@
 
 
 #define RX_PIN 8
-#define TX_PIN 7
+#define TX_PIN 9
 
 //try to enable network and DHCP?
 //#define HAVE_NETWORK 1
