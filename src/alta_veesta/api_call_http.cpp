@@ -19,7 +19,8 @@ void api_call_http_register_self(byte amsg_server[]) {
 	EthernetClient client;
 
 
-	Serial.println("HTTP opening connection...");
+	Serial.print("HTTP opening connection to ");
+	Serial.println(host);
 	/*
 	if (!ether.dnsLookup(website))
 		  Serial.println("DNS failed");
@@ -40,7 +41,7 @@ void api_call_http_register_self(byte amsg_server[]) {
 	netbuf += host;
 	netbuf += "\nConnection: close\n\n\n";
 
-	Serial.println("HTTP connected");
+	Serial.print("HTTP connected to ... ");
 
 	char sockbuf[ netbuf.length() ];
 	netbuf.toCharArray(sockbuf, netbuf.length());
@@ -73,7 +74,8 @@ void api_call_http(byte amsg_server[], char body[]) {
 	EthernetClient client;
 
 
-	Serial.println("HTTP opening connection...");
+	Serial.print("HTTP opening connection to ");
+	Serial.println(host);
 	/*
 	if (!ether.dnsLookup(website))
 		  Serial.println("DNS failed");
@@ -101,6 +103,7 @@ void api_call_http(byte amsg_server[], char body[]) {
 	postbuf = NULL;
 
 	Serial.println("HTTP connected");
+	Serial.print(netbuf);
 
 	char sockbuf[ netbuf.length() +1];
 	netbuf.toCharArray(sockbuf, netbuf.length()+1);
