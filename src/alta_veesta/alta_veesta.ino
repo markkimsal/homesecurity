@@ -38,7 +38,6 @@ int const BIT_MASK_BYTE3_ARMED_AWAY = 0x04;
 
 #include "api_call.h"
 
-#include "out_wire.h"
 
 
 
@@ -406,30 +405,30 @@ void on_display(char cbuf[], int *idx) {
                 Serial.print(",");
                 break;
             case 6:
-                if ( cbuf[x] & BIT_MASK_BYTE1_BEEP ) > 0 ) {
+                if ( ( cbuf[x] & BIT_MASK_BYTE1_BEEP ) > 0 ) {
                     Serial.print(" BEEPS: ");
                     print_hex( cbuf[x], 8);
                     Serial.print(",");
                 }
                 break;
             case 7:
-                if ( cbuf[x] & BIT_MASK_BYTE2_ARMED_HOME ) > 0 ) {
+                if ( ( cbuf[x] & BIT_MASK_BYTE2_ARMED_HOME ) > 0 ) {
                     Serial.print(" ARMED_HOME: ");
                 }
-                if ( cbuf[x] & BIT_MASK_BYTE2_READY ) > 0 ) {
+                if ( ( cbuf[x] & BIT_MASK_BYTE2_READY ) > 0 ) {
                     Serial.print(" READY: ");
                 }
                 print_hex( cbuf[x], 8);
                 Serial.print(",");
                 break;
             case 8:
-                if ( cbuf[x] & BIT_MASK_BYTE3_CHIME_MODE ) > 0 ) {
+                if ( ( cbuf[x] & BIT_MASK_BYTE3_CHIME_MODE ) > 0 ) {
                     Serial.print(" CHIME_MODE: ");
                 }
-                if ( cbuf[x] & BIT_MASK_BYTE3_AC_POWER ) > 0 ) {
+                if ( ( cbuf[x] & BIT_MASK_BYTE3_AC_POWER ) > 0 ) {
                     Serial.print(" AC_POWER: ");
                 }
-                if ( cbuf[x] & BIT_MASK_BYTE3_ARMED_AWAY ) > 0 ) {
+                if ( ( cbuf[x] & BIT_MASK_BYTE3_ARMED_AWAY ) > 0 ) {
                     Serial.print(" ARMED_AWAY: ");
                 }
                 print_hex( cbuf[x], 8);
