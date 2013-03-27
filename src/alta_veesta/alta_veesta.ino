@@ -653,11 +653,6 @@ void loop()
 {
 
 	if (!vista.available()) {
-		if (lastgidx != gidx) {
-			//debug_cbuf(gcbuf, &gidx, false);
-			lastgidx = gidx;
-		}
-
         readConsole();
 		return;
 	}
@@ -723,15 +718,6 @@ void loop()
 Serial.print("Unknown char: ");
 print_hex((char)x, 8);
 Serial.println();
-
-   gcbuf[ gidx ] = x;
-   gidx++;
-
-	if (gidx >= 30) {
-		Serial.print("Unknown Buffer overflow: ");
-		debug_cbuf(gcbuf, &gidx, true);
-		return;
-	}
 }
 
 
