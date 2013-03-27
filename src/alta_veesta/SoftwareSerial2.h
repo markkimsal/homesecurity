@@ -61,6 +61,7 @@ private:
 
   uint16_t _buffer_overflow:1;
   uint16_t _inverse_logic:1;
+  uint16_t _parity:1;
 
   // static data
   static char _receive_buffer[_SS_MAX_RX_BUFF]; 
@@ -69,9 +70,6 @@ private:
   static SoftwareSerial *active_object;
 
   // private methods
-  void recv();
-  uint8_t rx_pin_read();
-  void tx_pin_write(uint8_t pin_state);
   void setTX(uint8_t transmitPin);
   void setRX(uint8_t receivePin);
 
@@ -82,6 +80,11 @@ public:
   // public methods
   SoftwareSerial(uint8_t receivePin, uint8_t transmitPin, bool inverse_logic = false);
   ~SoftwareSerial();
+
+  void recv();
+  uint8_t rx_pin_read();
+  void tx_pin_write(uint8_t pin_state);
+
   void begin(long speed);
   bool listen();
   void end();
@@ -93,6 +96,7 @@ public:
   virtual int read();
   virtual int available();
   virtual void flush();
+  virtual void setParity(bool parity=false);
   
   using Print::write;
 
