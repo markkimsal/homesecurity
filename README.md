@@ -4,6 +4,8 @@ This project is designed to allow you to connect an Arduino-like device to your 
 #Web Notifications
 You can configure this project to ping a web server with any message you want when an alarm occurs.  This allows you to use a more powerful server to give you access to more powerful communication options (SMS, Email over SSL/STARTTLS, HTTPS, etc.)
 
+Please note that it may be illegal in your area to trasmit signal information from an alarm system to a centralized station without a license.
+
 #Config
 There are a few configurations available.  Most simply print CSV (Excel) compatible debugging of each signal.  Signals are decoded in ASCII, decimal, and hexidecimal values and printed to the serial port as comma separated (the last item has an extra comma after it, it's not missing data)
 
