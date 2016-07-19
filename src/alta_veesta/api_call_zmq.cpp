@@ -1,13 +1,14 @@
 
+#ifdef HAVE_NETWORK
 #include "api_call_zmq.h"
 
 
 #include <SPI.h>
 #include <Ethernet.h>
 
-extern prog_char msg_server_path[];
-extern prog_char msg_server_host[];
-extern prog_uint16_t msg_server_port;
+extern const char msg_server_path[];
+extern const char msg_server_host[];
+extern const uint16_t msg_server_port;
 
 void api_call_zmq_register_self(byte amsg_server[]) {
 
@@ -62,3 +63,4 @@ void api_call_zmq_alarm(byte amsg_server[]) {
 	strcpy_P(path, msg_server_path);
 	strcpy_P(host, msg_server_host);
 }
+#endif

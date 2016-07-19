@@ -1,12 +1,13 @@
 
+#ifdef HAVE_NETWORK
 #include "api_call_http.h"
 
 #include <SPI.h>
 #include <Ethernet.h>
 
-extern prog_uint16_t msg_server_port;
-extern prog_char msg_server_host[];
-extern prog_char msg_server_path[];
+extern const uint16_t msg_server_port;
+extern const char msg_server_host[];
+extern const char msg_server_path[];
 
 void api_call_http_register_self(byte amsg_server[]) {
 
@@ -105,7 +106,9 @@ void api_call_http(byte amsg_server[], char body[]) {
 	netbuf += postbuf.length();
 	netbuf += "\nConnection: close\n\n";
 	netbuf += postbuf;
-	postbuf = NULL;
+  //compile error on arduino 1.6.2
+  //it's just a memory optimization
+	//postbuf = NULL;
 
 	Serial.println("HTTP connected");
 	Serial.print(netbuf);
@@ -130,3 +133,4 @@ void api_call_http(byte amsg_server[], char body[]) {
 void api_call_http_init(byte amsg_server[]) {
 	api_call_http(amsg_server, "event=test");
 }
+#endif
