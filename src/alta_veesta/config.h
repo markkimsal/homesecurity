@@ -23,6 +23,10 @@
 //#define USE_ZMQ  1
 
 
+// Use LCD Screen
+#define HAVE_OLED 1
+#define OLED_SSD1306 1
+
 //========================================
 // Requires a custom web server
 //========================================

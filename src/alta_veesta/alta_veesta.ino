@@ -14,6 +14,10 @@
 byte mac[] = MAC_ADDR;
 #endif
 
+#ifdef HAVE_OLED
+#include "oled.h"
+#endif
+
 int vistaIn  = RX_PIN;
 int vistaOut = TX_PIN;
 
@@ -747,6 +751,10 @@ void setup()   {
 	//initialize USB serial
 	Serial.begin(115200);
 	Serial.println("good morning");
+
+	#ifdef HAVE_OLED
+	oled_test();
+	#endif
 
 	//ethernet
 	#ifdef HAVE_NETWORK
