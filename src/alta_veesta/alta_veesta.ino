@@ -5,8 +5,14 @@
 #include "util.h"
 #include <avr/interrupt.h>
 
-// for setting network timeout
+#ifdef HAVE_NETWORK
 #include <utility/w5100.h>
+#include "api_call.h"
+#include <SPI.h>
+#include <Ethernet.h>
+
+byte mac[] = MAC_ADDR;
+#endif
 
 int vistaIn  = RX_PIN;
 int vistaOut = TX_PIN;
@@ -40,18 +46,11 @@ extern unsigned long low_time = 0;
 bool   mid_msg = false;
 bool   mid_ack = false;
 
-#include "api_call.h"
-
 #include "out_wire.h"
 
 
 #include "SoftwareSerial2.h"
 SoftwareSerial vista(vistaIn, vistaOut, true);
-
-#include <SPI.h>
-#include <Ethernet.h>
-
-byte mac[] = MAC_ADDR;
 
 int ledPin =  13;    // LED connected to digital pin 13
 int syncBuf = 0;
@@ -722,12 +721,14 @@ Serial.println();
 
 
 
+#ifdef HAVE_NETWORK
 void send_email() {
 
 	Serial.println("SMTP opening connection...");
 
 	EthernetClient client;
 }
+#endif
 
 void setup()   {                
 
@@ -772,7 +773,6 @@ void setup()   {
 	// print your local IP address:
 	Serial.println("Triggering fake alarm for testing... ");
 	on_init();
-	#endif
 
 	#ifdef USE_SMTP
 //		send_email();
@@ -784,6 +784,7 @@ void setup()   {
 
 	#ifdef USE_ZMQ
 //		api_call_register_self();
+	#endif
 	#endif
 
 	Serial.println("Starting vista keypad bus"); 
