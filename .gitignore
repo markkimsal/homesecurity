@@ -7,3 +7,4 @@ src/alta_veesta/Makefile
 src/alta_veesta/config.h
 Makefile
 Makefile.mk
+Arduino-Makefile
