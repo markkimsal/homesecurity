@@ -1,6 +1,19 @@
 # VISTA ICM Replacement
 This project is designed to allow you to connect an Arduino-like device to your Honeywell (Ademco) security panel and "listen in" for key events.  This project is an implemenation of reverse engineering the Ademco ECP keypad bus.
 
+#Development
+Install gcc-avr and avr-libc packages
+
+Run scripts/bootstrap.sh to download Arduino-Makefile project
+
+Copy one of the Makefile-{{platform}}.mk files to Makefile.
+
+Edit the Makefile to match your settings for libraries, Arduino IDE location, and TTY port settings.
+
+```
+make upload
+```
+
 #Web Notifications
 You can configure this project to ping a web server with any message you want when an alarm occurs.  This allows you to use a more powerful server to give you access to more powerful communication options (SMS, Email over SSL/STARTTLS, HTTPS, etc.)
 
