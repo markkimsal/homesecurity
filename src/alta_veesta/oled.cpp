@@ -27,6 +27,6 @@ void oled_test() {
   oled.setTextXY(0,0);              // Set cursor position, start of line 0
   oled.putString("AltaVeesta");
   oled.setTextXY(2,0);              // Set cursor position, start of line 2
-  oled.putString("Home security,");
+  oled.putString("Home security");
 }
 
