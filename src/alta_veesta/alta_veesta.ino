@@ -78,7 +78,7 @@ inline void tunedDelay(uint16_t delay) {
 
 void blink_alive() {
 
-	for (int x=0; x < 3; x++) {
+	for (int x=0; x < 6; x++) {
 		digitalWrite(ledPin, HIGH);
 		delay(100);
 		digitalWrite(ledPin, LOW);

@@ -2,9 +2,9 @@
 #define config_h
 
 #define DEBUG 0
-//#define DEBUG_STATUS 0
-//#define DEBUG_KEYS    0
-//#define DEBUG_DISPLAY 0
+#define DEBUG_STATUS 0
+#define DEBUG_KEYS    0
+#define DEBUG_DISPLAY 0
 
 
 #define RX_PIN 8
