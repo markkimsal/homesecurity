@@ -121,4 +121,15 @@ void write_chars(
     //Serial.println();
 }
 
+void debug_out_buf()
+{
+	Serial.println();
+	Serial.write("Output buffer: ");
+	for(int x =0; x < outbufIdx; x++) {
+		Serial.write((int)outbuf[x]);
+	}
+	Serial.println();
+	Serial.flush();
+}
+
 

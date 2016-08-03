@@ -22,6 +22,8 @@ void out_wire_queue(
 		char byte
 );
 
+void debug_out_buf();
+
 bool have_message();
 
 void out_wire_init();
