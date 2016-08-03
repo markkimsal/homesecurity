@@ -595,6 +595,12 @@ void readConsole() {
 
 		out_wire_queue(inByte);
 	} while (Serial.available());
+
+	#ifdef DEBUG
+		debug_out_buf();
+	#endif
+
+
 /*
 
 	if (inByte == termChar) {
