@@ -18,8 +18,6 @@ byte mac[] = MAC_ADDR;
 #include "oled.h"
 #endif
 
-int vistaIn  = RX_PIN;
-int vistaOut = TX_PIN;
 
 int msg_len_status = 45;
 int msg_len_ack = 2;
@@ -54,7 +52,7 @@ bool   mid_ack = false;
 
 
 #include "SoftwareSerial2.h"
-SoftwareSerial vista(vistaIn, vistaOut, true);
+SoftwareSerial vista(RX_PIN, TX_PIN, true);
 
 int ledPin =  13;    // LED connected to digital pin 13
 int syncBuf = 0;
