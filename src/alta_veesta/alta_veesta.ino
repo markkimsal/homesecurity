@@ -507,12 +507,17 @@ void on_display(char cbuf[], int *idx) {
 	Serial.print(",\"msg\": \"");
 	for (int x = 12; x < *idx -1; x++) {
 		if ((int)cbuf[x] < 32 || (int)cbuf[x] > 126) {
-			Serial.print(" ");
+		    //don't print non printable ascii
+//			Serial.print(" ");
 		} else {
 			Serial.print(cbuf[x]);
 		}
+		//TODO: fix timing
+		//this is because there's a timing bug and we get an extra
+		//1 bit in the most significant position
 		if (cbuf[x] & 0x80) {
-			Serial.print( (unsigned char)cbuf[x] ^ 0x80);
+			cbuf[x] = cbuf[x] ^ 0x80;
+			Serial.print( cbuf[x] );
 		}
 	}
 
