@@ -391,9 +391,10 @@ void on_display(char cbuf[], int *idx) {
     // 5th byte represent zone
     // 6th binary encoded data including beeps
     // 7th binary encoded data including status armed mode
-    // 8th binary encoded data including ac power chime
+    // 8th binary encoded data including ac power and chime
     // 9th byte Programming mode = 0x01
     // 10th byte promt position in the display message of the expected input
+	#ifdef DEBUG_DISPLAY
     Serial.print("F7: {");
     for (int x = 1; x <= 11 ; x++) {
          print_hex( cbuf[x], 8);
@@ -409,90 +410,93 @@ void on_display(char cbuf[], int *idx) {
 	for (int x = 12; x < *idx -1; x++) {
 		Serial.print ( cbuf[x] );
 	}
-
 	Serial.println();
+	#endif
 
-	Serial.print("F7: ");
-    for (int x = 1; x <= 11 ; x++) {
+    // print out message as JSON
+    Serial.print("{\"type\":\"display\",");
+    for (int x = 0; x <= 10 ; x++) {
         switch ( x ) {
             case 1:
-                Serial.print(" addr1: ");
+                Serial.print(" \"addr1\": \"");
                 print_hex( cbuf[x], 8);
-    	        Serial.print(";");
+                Serial.print("\",");
                 break;
             case 2:
-                Serial.print(" addr2: ");
+                Serial.print(" \"addr2\": \"");
                 print_hex( cbuf[x], 8);
-                Serial.print(";");
+                Serial.print("\",");
                 break;
             case 3:
-                Serial.print(" addr3: ");
+                Serial.print(" \"addr3\": \"");
                 print_hex( cbuf[x], 8);
-                Serial.print(";");
+                Serial.print("\",");
                 break;
             case 4:
-                Serial.print(" addr4: ");
+                Serial.print(" \"addr4\": \"");
                 print_hex( cbuf[x], 8);
-                Serial.print(";");
+                Serial.print("\",");
                 break;
             case 5:
-                Serial.print(" zone: ");
+                Serial.print(" \"zone\": \"");
                 print_hex( cbuf[x], 8);
-                Serial.print(";");
+                Serial.print("\",");
                 break;
             case 6:
                 if ( (cbuf[x] & BIT_MASK_BYTE1_BEEP ) > 0 ) {
-                    Serial.print(" BEEPS: ");
+                    Serial.print(" \"beep\": \"");
                     print_hex( cbuf[x], 8);
-                    Serial.print(";");
+                    Serial.print("\",");
                 }
                 break;
             case 7:
                 if ( (cbuf[x] & BIT_MASK_BYTE2_ARMED_HOME ) ) {
-                    Serial.print(" ARMED_STAY: true;");
+                    Serial.print(" \"ARMED_STAY\": \"true\",");
                 } else {
-                    Serial.print(" ARMED_STAY: false;");
+                    Serial.print(" \"ARMED_STAY\": \"false\",");
                 }
                 if ( (cbuf[x] & BIT_MASK_BYTE2_READY )) {
-                    Serial.print(" READY: true;");
+                    Serial.print(" \"READY\": \"true\",");
                 } else {
-                    Serial.print(" READY: false;");
+                    Serial.print(" \"READY\": \"false\",");
                 }
 //                print_hex( cbuf[x], 8);
                 break;
             case 8:
                 if ( (cbuf[x] & BIT_MASK_BYTE3_CHIME_MODE ) ) {
-                    Serial.print(" CHIME_MODE: on;");
+                    Serial.print(" \"chime\": \"on\",");
                 } else {
-                    Serial.print(" CHIME_MODE: off;");
+                    Serial.print(" \"chime\": \"off\",");
                 }
                 if ( (cbuf[x] & BIT_MASK_BYTE3_AC_POWER ) ) {
-                    Serial.print(" AC_POWER: on;");
+                    Serial.print(" \"ac_power\": \"on\",");
                 } else {
-                    Serial.print(" AC_POWER: off;");
+                    Serial.print(" \"ac_power\": \"off\",");
                 }
                 if ( (cbuf[x] & BIT_MASK_BYTE3_ARMED_AWAY ) > 0 ) {
-                    Serial.print(" ARMED_AWAY: true;");
+                    Serial.print(" \"ARMED_AWAY\": \"true\",");
                 } else {
-                    Serial.print(" ARMED_AWAY: false;");
+                    Serial.print(" \"ARMED_AWAY\": \"false\",");
                 }
 //                print_hex( cbuf[x], 8);
                 break;
             case 9:
+                Serial.print(" \"programming_mode\": \"");
                 if ( cbuf[x] == 0x01 ) {
-                    Serial.print(" PROGRAMMING MODE: ");
                     print_hex( cbuf[x], 8);
-                    Serial.print(";");
-                }     
+                } else {
+                    Serial.print("0");
+                }
+                Serial.print("\"");
                 break;
             case 10:
                 if ( cbuf[x] != 0x00 ) {
-                    Serial.print("PROMPT POS: ");
+                    Serial.print(",\"prompt_pos\": \"");
                     Serial.print( (int)cbuf[x] );
-                }     
+                    print_hex( cbuf[x], 8);
+                    Serial.print("\"");
+                }
                 
-                print_hex( cbuf[x], 8);
-                Serial.print(";");
                 break;
             default:
 //                print_hex( cbuf[x], 8);
@@ -500,12 +504,23 @@ void on_display(char cbuf[], int *idx) {
                 break;
             }
 	}
-	Serial.println();
+	Serial.print(",\"msg\": \"");
+	for (int x = 12; x < *idx -1; x++) {
+		if ((int)cbuf[x] < 32 || (int)cbuf[x] > 126) {
+			Serial.print(" ");
+		} else {
+			Serial.print(cbuf[x]);
+		}
+		if (cbuf[x] & 0x80) {
+			Serial.print( (unsigned char)cbuf[x] ^ 0x80);
+		}
+	}
+
+	Serial.println("\"}");
 		
 	//DEBUG
 	#ifdef DEBUG_DISPLAY
 	debug_cbuf(cbuf, idx, false);
-
 	#endif
 
 	memset(cbuf, 0, sizeof(cbuf));

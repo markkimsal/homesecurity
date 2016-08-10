@@ -66,7 +66,7 @@ void debug_cbuf(char cbuf[], int *idx, bool clear)
 	//print printable ASCII
 	for(int x =0; x < *idx; x++) {
 		if ((int)cbuf[x] < 32 || (int)cbuf[x] > 126) {
-			Serial.print(" ");
+			Serial.print("  ");
 			//Serial.print(cbuf[x], DEC);
 		} else {
 //			Serial.print( " ");
