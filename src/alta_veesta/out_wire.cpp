@@ -59,13 +59,13 @@ void write_chars(
 
 	if (outbufIdx == 0) {return;}
 
-	int header = ((++seq << 6) & 0xc0) | (18 & 0x3F);
+	int header = ((++seq << 6) & 0xc0) | (KPADDR & 0x3F);
 
 
 	//header is the bit mask YYXX-XXXX
 	//	where YY is an incrementing sequence number
 	//	and XX-XXXX is the keypad address (decimal 16-31)
-	//int header = 18 & 0x3F;
+	//int header = KPADDR & 0x3F;
 
 	vistaSerial.write((int)header);
 	vistaSerial.flush();

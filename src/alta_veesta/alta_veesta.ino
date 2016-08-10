@@ -583,8 +583,12 @@ void on_ack(char cbuf[], int *idx) {
 	#endif
 
 	int kpadr = (int)cbuf[1];
-//	Serial.print("F6: kp ack addr = ");
-//	Serial.println(kpadr, DEC);
+	Serial.print("F6: kp ack addr = ");
+	Serial.println(kpadr, DEC);
+
+Serial.print("bitmask is ");
+Serial.println(kpaddr_to_bitmask(KPADDR), HEX);
+
 
 	//clear memroy
 	memset(cbuf, 0, sizeof(cbuf));

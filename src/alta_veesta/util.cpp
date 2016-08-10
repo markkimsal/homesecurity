@@ -1,5 +1,14 @@
 #include "alta_veesta.h"
 
+/**
+ * 16 is a valid address, but not for keypads
+ * I think it's for wireless or some dialer / uploader
+ * Let's inverse for the serial output too.
+ */
+char kpaddr_to_bitmask(int kpaddr) {
+	return 0xFF ^ (0x01 << (kpaddr - 16));
+}
+
 void print_hex(int v, int num_places)
 {
     int mask=0, n, num_nibbles, digit;
