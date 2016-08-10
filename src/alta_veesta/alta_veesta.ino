@@ -259,11 +259,14 @@ void on_status(char cbuf[], int *idx) {
 	//	return;
 	}
 
+	#ifdef DEBUG_STATUS
 	Serial.print("F2: {");
+
 	//first 6 bytes are headers
 	for (int x = 1; x < 7 ; x++) {
-		print_hex( cbuf[x], 8);
+		if (x > 1) 
 		Serial.print(",");
+		print_hex( cbuf[x], 8);
 	}
 	//7th byte is incremental counter
 	Serial.print (" cnt: ");
@@ -271,13 +274,14 @@ void on_status(char cbuf[], int *idx) {
 	Serial.println ("}");
 
 	//8-end is body
-	Serial.print("F2: ");
+	Serial.print("F2: {");
 	for (int x = 8; x < *idx ; x++) {
 		print_hex( cbuf[x], 8);
 		Serial.print(",");
 	}
 
-	Serial.println();
+	Serial.println("}");
+	#endif
 
 	//F2 messages with less than 16 bytes don't seem to have
 	// any important information
@@ -334,45 +338,48 @@ void on_status(char cbuf[], int *idx) {
 	short exit_delay = (cbuf[22] & 0x02);
 	short fault = (cbuf[22] & 0x04);
 
-	Serial.print("F2: armed: ");
-	if (armed) {
-		Serial.print("yes");
-	} else {
-		Serial.print("no");
-	}
-	Serial.print("; mode: ");
-	if (away) {
-		Serial.print("away");
-	} else {
-		Serial.print("stay");
-	}
-	Serial.print("; ignore faults: ");
-	if (exit_delay) {
-		Serial.print("yes");
-	} else {
-		Serial.print("no");
-	}
-	Serial.print("; faulted: ");
-	if (fault) {
-		Serial.print("yes");
-	} else {
-		Serial.print("no");
-	}
+	//print as JSON
+	Serial.print("{\"type\":\"status\"");
 
+	Serial.print(",\"armed\": ");
+	if (armed) {
+		Serial.print("\"yes\"");
+	} else {
+		Serial.print("\"no\"");
+	}
+	Serial.print(", \"mode\": ");
+	if (away) {
+		Serial.print("\"away\"");
+	} else {
+		Serial.print("\"stay\"");
+	}
+	Serial.print(", \"ignore_faults\": ");
+	if (exit_delay) {
+		Serial.print("\"yes\"");
+	} else {
+		Serial.print("\"no\"");
+	}
+	Serial.print(", \"faulted\": ");
+	if (fault) {
+		Serial.print("\"yes\"");
+	} else {
+		Serial.print("\"no\"");
+	}
 
 	
-	Serial.println();
+	Serial.println("}");
 
 	if ( armed && fault && !exit_delay ) {
 		on_alarm();
-		Serial.println ("F2: ALARM!");
+		Serial.println ("{\"type\": \"alarm\"}");
 		//save gcbuf for debugging
 		strncpy(alarm_buf[0],  cbuf, 30);
 	} else if ( !armed  && fault  && away && !exit_delay) {
 		//away bit always flips to 0x02 when alarm is canceled
-		Serial.println ("F2: alarm canceled");
+//		Serial.println ("F2: alarm canceled");
+		Serial.println ("{\"type\": \"cancel\"}");
 	} else {
-		Serial.println ("F2: no alarm");
+		//Serial.println ("F2: no alarm");
 	}
 
 	//#ifdef DEBUG_STATUS
@@ -414,74 +421,100 @@ void on_display(char cbuf[], int *idx) {
 	#endif
 
     // print out message as JSON
-    Serial.print("{\"type\":\"display\",");
+    Serial.print("{\"type\":\"display\"");
     for (int x = 0; x <= 10 ; x++) {
         switch ( x ) {
             case 1:
+                Serial.print(",");
                 Serial.print(" \"addr1\": \"");
                 print_hex( cbuf[x], 8);
-                Serial.print("\",");
+                Serial.print("\"");
                 break;
             case 2:
+                Serial.print(",");
                 Serial.print(" \"addr2\": \"");
                 print_hex( cbuf[x], 8);
-                Serial.print("\",");
+                Serial.print("\"");
                 break;
             case 3:
-                Serial.print(" \"addr3\": \"");
-                print_hex( cbuf[x], 8);
-                Serial.print("\",");
+				if (cbuf[x] & 0x02) {
+                    Serial.print(", \"kp17\": \"active\"");
+				}
+				if (cbuf[x] & 0x04) {
+                    Serial.print(", \"kp18\": \"active\"");
+				}
+				if (cbuf[x] & 0x08) {
+                    Serial.print(", \"kp19\": \"active\"");
+				}
+				if (cbuf[x] & 0x10) {
+                    Serial.print(", \"kp20\": \"active\"");
+				}
+				if (cbuf[x] & 0x20) {
+                    Serial.print(", \"kp21\": \"active\"");
+				}
+				if (cbuf[x] & 0x40) {
+                    Serial.print(", \"kp22\": \"active\"");
+				}
+				if (cbuf[x] & 0x80) {
+                    Serial.print(", \"kp23\": \"active\"");
+				}
+//                print_hex( cbuf[x], 8);
+//                Serial.print("\",");
                 break;
             case 4:
+                Serial.print(",");
                 Serial.print(" \"addr4\": \"");
                 print_hex( cbuf[x], 8);
-                Serial.print("\",");
+                Serial.print("\"");
                 break;
             case 5:
+                Serial.print(",");
                 Serial.print(" \"zone\": \"");
                 print_hex( cbuf[x], 8);
-                Serial.print("\",");
+                Serial.print("\"");
                 break;
             case 6:
                 if ( (cbuf[x] & BIT_MASK_BYTE1_BEEP ) > 0 ) {
+                    Serial.print(",");
                     Serial.print(" \"beep\": \"");
                     print_hex( cbuf[x], 8);
-                    Serial.print("\",");
+                    Serial.print("\"");
                 }
                 break;
             case 7:
                 if ( (cbuf[x] & BIT_MASK_BYTE2_ARMED_HOME ) ) {
-                    Serial.print(" \"ARMED_STAY\": \"true\",");
+                    Serial.print(", \"ARMED_STAY\": \"true\"");
                 } else {
-                    Serial.print(" \"ARMED_STAY\": \"false\",");
+                    Serial.print(", \"ARMED_STAY\": \"false\"");
                 }
                 if ( (cbuf[x] & BIT_MASK_BYTE2_READY )) {
-                    Serial.print(" \"READY\": \"true\",");
+                    Serial.print(", \"READY\": \"true\"");
                 } else {
-                    Serial.print(" \"READY\": \"false\",");
+                    Serial.print(", \"READY\": \"false\"");
                 }
 //                print_hex( cbuf[x], 8);
                 break;
             case 8:
                 if ( (cbuf[x] & BIT_MASK_BYTE3_CHIME_MODE ) ) {
-                    Serial.print(" \"chime\": \"on\",");
+                    Serial.print(", \"chime\": \"on\"");
                 } else {
-                    Serial.print(" \"chime\": \"off\",");
+                    Serial.print(", \"chime\": \"off\"");
                 }
                 if ( (cbuf[x] & BIT_MASK_BYTE3_AC_POWER ) ) {
-                    Serial.print(" \"ac_power\": \"on\",");
+                    Serial.print(", \"ac_power\": \"on\"");
                 } else {
-                    Serial.print(" \"ac_power\": \"off\",");
+                    Serial.print(", \"ac_power\": \"off\"");
                 }
                 if ( (cbuf[x] & BIT_MASK_BYTE3_ARMED_AWAY ) > 0 ) {
-                    Serial.print(" \"ARMED_AWAY\": \"true\",");
+                    Serial.print(", \"ARMED_AWAY\": \"true\"");
                 } else {
-                    Serial.print(" \"ARMED_AWAY\": \"false\",");
+                    Serial.print(", \"ARMED_AWAY\": \"false\"");
                 }
 //                print_hex( cbuf[x], 8);
                 break;
+				/*
             case 9:
-                Serial.print(" \"programming_mode\": \"");
+                Serial.print(", \"programming_mode\": \"");
                 if ( cbuf[x] == 0x01 ) {
                     print_hex( cbuf[x], 8);
                 } else {
@@ -489,6 +522,7 @@ void on_display(char cbuf[], int *idx) {
                 }
                 Serial.print("\"");
                 break;
+				*/
             case 10:
                 if ( cbuf[x] != 0x00 ) {
                     Serial.print(",\"prompt_pos\": \"");
@@ -553,19 +587,66 @@ void on_poll() {
 
 
 
-	tunedDelay(236 * 4);
-	tunedDelay(236 * 4.60);
+	//tunedDelay(236 * 4);
+//	tunedDelay(236 * 4.60);
+	tunedDelay(200*6.2);
 
 	vista.write(0xff);
 
-	tunedDelay(236 * 4);
-	tunedDelay(236 * 4.8);
+//	tunedDelay(236 * 2.8);
+//	tunedDelay(236 * 4.8);
+	tunedDelay(200*6.4);
 
-	vista.write(0xFB);
+
+	//keypad addr 18 appears to be 0xF7
+	//or 1111-0111
+
+	//keypad addr 20 appears to be 0xFB
+	//or 1111-1011
+
+	//keypad addr 19 appears to be 0xFD
+	//or 1111-1101
+
+	//keypad addr 18 appears to be 0xFE
+	//or 1111-1110
+
+
+	//vista.write(0xFE);
+	//vista.write(0x7F);
+	//adjust timing until kpaddr 20 works
+	//0xEF should be 20
+
+	//new tests
+	//with 236*4
+	//0xFE is kpaddr 18 (1111-1110)
+	//0xFD is kpaddr 19 (1111-1101)
+
+	//with 1000
+	//0xFE is kpaddr 18 (1111-1110)
+	//0xFD is kpaddr 18 (1111-1101)
+	//0xFB is kpaddr 18 (1111-1011)
+
+	//with 236
+	//0xFE broke
+	//0xFB is kpaddr 18 (1111-1011)
+	//0xEF broke
+
+	//with 236 * 2
+	//0xFB is kpaddr 18
+	//0xFD is kpaddr 18
+	//0xEF broke
 /*
 	while(vista.rx_pin_read()) { tunedDelay(30); }
 	while(!vista.rx_pin_read()) { tunedDelay(30); }
 */
+
+	//with tunedDelay(208*5);
+	//0x7f is 18
+	//0xBf is 18
+	//0xDf is 18
+	//0xEF doesn't work
+    //0xFD is 17;
+	vista.write(kpaddr_to_bitmask(KPADDR));
 
 	vista.tx_pin_write( LOW );
     SREG = oldSREG;
