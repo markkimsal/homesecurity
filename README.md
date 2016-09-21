@@ -52,7 +52,7 @@ Use the linear regulator to power the arduino.
 
 ### Arduino with Raspberry Pi
 
-If you want to run a Raspberry Pi in your secutiry panel, the current from the red wire cannot supply stable load to the RPi.   You must draw power from another wall wart or by piggy-backing off the panel's wall wart - which is usually 16v AC.  Use a AC-DC step down converter or DC-DC step down converter with rectifier diodes or recitfier IC.  Then power the Arduino from the RPi's GPIO.
+If you want to run a Raspberry Pi in your secutiry panel, the current from the red wire cannot supply stable load to the RPi.   You must draw power from another wall wart or by piggy-backing off the panel's wall wart - which is usually 16v AC.  Use a AC-DC step down converter or DC-DC step down converter with rectifier diodes or recitfier IC.  Then power the Arduino from the RPi's GPIO.  If you use diode rectifiers to convert AC to DC for a DC-DC step down converter, make sure the diodes can handle the amerage drawn by the RPi.  Buy large ones that are meant for mains, don't use tiny ones that you got in a kit.
 
 If you do this, the relative voltage of the signals will be vary different, you must use optocouplers between the Arduino and the panel's signals.
 
