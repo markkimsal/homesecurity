@@ -44,9 +44,9 @@ You can run the panel's yellow wire through a 5v regulator - LM7805 - to get the
 
 If you want the Arduino to be powered from the keypad line, you can use NPN transistors to convert the signals to 5V or 3.3V.
 
-Connect one transistor's collector to a stable 5V from the regulator.  Use a large value resistor between the yellow wire from the panel and the base of the transistor.  The value should reduce the voltage to 0.6v range.  Something like 600k I think.
+Connect one transistor's collector to a stable 5V from the regulator.  Use a large value resistor between the yellow wire from the panel and the base of the transistor.  The value should reduce the voltage to 0.6v range.  Something like 600k I think.  The emitter of this transistor goes to the RX pin on the Arduino (the pin configured as RX in the config.h, NOT the one marked as RX on the board).
 
-Connect the raw red power line to the other transistor's collector, and use a small value resistor in between the base of this transitor and the Arduino signaling pin.
+Connect the raw red power line to the other transistor's collector, and use a small value resistor in between the base of this transitor and the Arduino signaling pin.  The emitter of this transistor can connect through a diode to the green wire.
 
 Use the linear regulator to power the arduino.
 
