@@ -37,7 +37,7 @@ You can also setup your web server configuration in the config.h file.  The proc
 There are 3 different hardware configurations.  One for each level of complexity of your project.<F9>
 
 ### Just for Testing
-You can run the panel's yellow wire through a 5v regulator - LM7805 - to get the keypad signals down to 5v.  Use LD1117V33 to step down to 3.3 signals if you're using a 3.3v Arduino.  Use a 13v tolarant diode between the arduino and the green wire.  If your cable is short enough, 5v from the Arduino should be enough to signal to the panel.  If you're using 3.3v, then this setup can only listen and can't talk back.  (Maybe, try it).
+You can run the panel's yellow wire through a 5v regulator - LM7805 - to get the keypad signals down to 5v.  Use LD1117V33 to step down to 3.3 signals if you're using a 3.3v Arduino.  Use a 13v tolarant diode between the arduino and the green wire.  If your cable is short enough, 5v from the Arduino should be enough to signal to the panel.  If you're using 3.3v, then this setup can only listen and can't talk back.  (Maybe it can, try it!)
 
 
 ### Arduino powered as a keypad.
