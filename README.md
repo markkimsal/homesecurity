@@ -58,6 +58,10 @@ If you do this, the relative voltage of the signals will be vary different, you 
 
 Use optocouplers in place of all transistors in the second setup, and use a high value pulldown resistor on the output side.  PC817C seem to work fine, as well as MC14504b.
 
+The only real difference in the wiring is that one side of the opto coupler will need to connect to ground.  What you would have connected to the BASE of the transistor actually goes to an LED and then to ground.
+
+An opto coupler is an LED on one side (voltage and ground) and a transitor on the other side (collector and emitter).  The base of the transistor is triggered on and off by the LED.  So, signals from one side will effectively switch on and off the NPN transistor on the other side.  You supply the transistor with voltage that your circuit can handle, and you step down the voltage and/or current on the high side so that it doesn't burn out the LED.
+
 (The RPi runs at 5v, but signals at 3.3v.  If you run a 5v arduino, you will need to level shift the UART signals to communicate with the RPi.)
 
 #Protocol
