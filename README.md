@@ -97,6 +97,9 @@ In order to get perfect AND logic from multiple devices sending pulses at the sa
     
     __________________________/\_________/\__________/\_/\_____  (0xFF, 0xFF, 0xEF) (Green)
 
+### Note on "pulsing"
+It seems like this might be a standard way to use standard UART flow control on just 2 wires.  It seems like maybe the Perl CPAN library for serial communication can understand this situation natively.  If the yellow wire is split to both a hardware implementation of both RX and CTS it might "just work".
+
 #License
 This project uses some parts of Arduino IDE - specifically the SoftwareSerial library.  So, whatever license that is under, this project is under (for the time being).
 
