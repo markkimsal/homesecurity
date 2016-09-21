@@ -1,31 +1,62 @@
 # VISTA ICM Replacement
 This project is designed to allow you to connect an Arduino-like device to your Honeywell (Ademco) security panel and "listen in" for key events.  This project is an implemenation of reverse engineering the Ademco ECP keypad bus.
 
-#Development
+# Development on Debian/Ubuntu
 Install gcc-avr and avr-libc packages
 
-Run scripts/bootstrap.sh to download Arduino-Makefile project
+Run scripts/bootstrap.sh to download Arduino-Makefile project.  This will unzip into a folder called "Arduino-Makefile"
 
-Copy one of the Makefile-{{platform}}.mk files to Makefile.
+Copy Makefile-Linux.mk files to Makefile.
 
 Edit the Makefile to match your settings for libraries, Arduino IDE location, and TTY port settings.
+
+Use make show\_boards  and make show\_submenu to find the right values"
+
+  1. PROJECT\_DIR       = /path where this checkout is
+  2. BOARD\_TAG         = pro<F9>
+  3. BOARD\_SUB         = 8MHzatmega328
+
+To compile and upload to your arduino run:
 
 ```
 make upload
 ```
 
-#Web Notifications
+
+# Web Notifications
 You can configure this project to ping a web server with any message you want when an alarm occurs.  This allows you to use a more powerful server to give you access to more powerful communication options (SMS, Email over SSL/STARTTLS, HTTPS, etc.)
 
 Please note that it may be illegal in your area to trasmit signal information from an alarm system to a centralized station without a license.
 
-#Config
+# Config
 There are a few configurations available.  Most simply print CSV (Excel) compatible debugging of each signal.  Signals are decoded in ASCII, decimal, and hexidecimal values and printed to the serial port as comma separated (the last item has an extra comma after it, it's not missing data)
 
 You can also setup your web server configuration in the config.h file.  The processing power on the Arduino is limited so you cannot do SSL or even e-mail (because most gateways require TLS wrapped SMTP connections).  Sending a small packet to a web server allows you to extend the capabilities of the Arduino with a more powerful CPU.
 
-#Hardware Setup
-If you're in the U.S you can get everything you need from Radio Shack.  Pick up an Arduino, an Ethernet Shield, a Proto Shield (or a breadboard), 2 5v regulators, some resistors, some wire, some soldering equipment.  Power the Arduino device from the keypad 12 volt wire by putting the keypad 12 volt wire into the 5v regulator and connect the output to the Arduino 5 volt in pin.  Connect the grounds.  Connect the data-out wire (yellow) to another 5 volt regulator and put the output of this regulator to pin 8 on the Arduino.  Connect the data in wire (green) to pin 7.  Ground the Arduino to the keypad ground wire (black).
+# Hardware Setup
+There are 3 different hardware configurations.  One for each level of complexity of your project.<F9>
+
+### Just for Testing
+You can run the panel's yellow wire through a 5v regulator - LM7805 - to get the keypad signals down to 5v.  Use LD1117V33 to step down to 3.3 signals if you're using a 3.3v Arduino.  Use a 13v tolarant diode between the arduino and the green wire.  If your cable is short enough, 5v from the Arduino should be enough to signal to the panel.  If you're using 3.3v, then this setup can only listen and can't talk back.  (Maybe, try it).
+
+
+### Arduino powered as a keypad.
+
+If you want the Arduino to be powered from the keypad line, you can use NPN transistors to convert the signals to 5V or 3.3V.
+
+Connect one transistor's collector to a stable 5V from the regulator.  Use a large value resistor between the yellow wire from the panel and the base of the transistor.  The value should reduce the voltage to 0.6v range.  Something like 600k I think.
+
+Connect the raw red power line to the other transistor's collector, and use a small value resistor in between the base of this transitor and the Arduino signaling pin.
+
+Use the linear regulator to power the arduino.
+
+### Arduino with Raspberry Pi
+
+If you want to run a Raspberry Pi in your secutiry panel, the current from the red wire cannot supply stable load to the RPi.   You must draw power from another wall wart or by piggy-backing off the panel's wall wart - which is usually 16v AC.  Use a AC-DC step down converter or DC-DC step down converter with rectifier diodes or recitfier IC.  Then power the Arduino from the RPi's GPIO.
+
+If you do this, the relative voltage of the signals will be vary different, you must use optocouplers between the Arduino and the panel's signals.
+
+Use optocouplers in place of all transistors in the second setup, and use a high value pulldown resistor on the output side.
 
 #Protocol
 Essentially, the data out wire uses 8-bit, even parity, 1 stop bit, inverted, NRZ +12 volt TTL signals.  But, the data out wire also acts somewhat like a clock wire sometimes.  
