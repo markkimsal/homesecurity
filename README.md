@@ -64,6 +64,13 @@ An opto coupler is an LED on one side (voltage and ground) and a transitor on th
 
 (The RPi runs at 5v, but signals at 3.3v.  If you run a 5v arduino, you will need to level shift the UART signals to communicate with the RPi.)
 
+### Arduino with Raspberry Pi (Alt)
+
+If you have a 5v Arduino, then you'll have to level shift the signals from Arduino to the RPi.  This gives you the opportunity to power the Arduino from the panel as a keypad, and the RPi from an external source.  I haven't tested this setup, but it should work.
+
+This type of setup would allow you to have the RPi and the Arduino in a remote location, away from the panel, just like a keypad (a keypad that you have to also plugin).
+
+
 #Protocol
 Essentially, the data out wire uses 8-bit, even parity, 1 stop bit, inverted, NRZ +12 volt TTL signals.  But, the data out wire also acts somewhat like a clock wire sometimes.  
 
