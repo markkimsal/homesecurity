@@ -58,6 +58,8 @@ If you do this, the relative voltage of the signals will be vary different, you 
 
 Use optocouplers in place of all transistors in the second setup, and use a high value pulldown resistor on the output side.
 
+(The RPi runs at 5v, but signals at 3.3v.  If you run a 5v arduino, you will need to level shift the UART signals to communicate with the RPi.)
+
 #Protocol
 Essentially, the data out wire uses 8-bit, even parity, 1 stop bit, inverted, NRZ +12 volt TTL signals.  But, the data out wire also acts somewhat like a clock wire sometimes.  
 
