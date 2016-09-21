@@ -56,7 +56,7 @@ If you want to run a Raspberry Pi in your secutiry panel, the current from the r
 
 If you do this, the relative voltage of the signals will be vary different, you must use optocouplers between the Arduino and the panel's signals.
 
-Use optocouplers in place of all transistors in the second setup, and use a high value pulldown resistor on the output side.
+Use optocouplers in place of all transistors in the second setup, and use a high value pulldown resistor on the output side.  PC817C seem to work fine, as well as MC14504b.
 
 (The RPi runs at 5v, but signals at 3.3v.  If you run a 5v arduino, you will need to level shift the UART signals to communicate with the RPi.)
 
