@@ -22,7 +22,7 @@ byte mac[] = MAC_ADDR;
 int msg_len_status = 45;
 int msg_len_ack = 2;
 
-int  seq_poll = 0;
+volatile int  seq_poll = 0;
 
 char gcbuf[30];
 int  gidx = 0;
@@ -44,7 +44,7 @@ int const BIT_MASK_BYTE3_CHIME_MODE = 0x20;
 int const BIT_MASK_BYTE3_AC_POWER = 0x08;
 int const BIT_MASK_BYTE3_ARMED_AWAY = 0x04;
 
-extern unsigned long low_time = 0;
+volatile unsigned long low_time = 0;
 bool   mid_msg = false;
 bool   mid_ack = false;
 
@@ -571,31 +571,23 @@ void on_poll() {
 	if ( !have_message() ) return;
 	vista.setParity(false);
 
-	vista.write(0xff);
 
+	seq_poll++;
+	if (seq_poll > 1) {
+		seq_poll = 0;
+		low_time = 0;
+		return;
+	}
     uint8_t oldSREG = SREG;
     cli();
 
+	vista.write(0xff);
 
-//	vista.setParity(true);
-
-
-	seq_poll++;
-	if (seq_poll > 3) {
-		seq_poll = 1;
-	}
-
-
-
-	//tunedDelay(236 * 4);
-//	tunedDelay(236 * 4.60);
-	tunedDelay(200*6.2);
+	tunedDelay(540);
 
 	vista.write(0xff);
 
-//	tunedDelay(236 * 2.8);
-//	tunedDelay(236 * 4.8);
-	tunedDelay(200*6.4);
+	tunedDelay(575);
 
 
 	//keypad addr 18 appears to be 0xF7
@@ -635,10 +627,6 @@ void on_poll() {
 	//0xFB is kpaddr 18
 	//0xFD is kpaddr 18
 	//0xEF broke
-/*
-	while(vista.rx_pin_read()) { tunedDelay(30); }
-	while(!vista.rx_pin_read()) { tunedDelay(30); }
-*/
 
 	//with tunedDelay(208*5);
 	//0x7f is 18
@@ -649,14 +637,17 @@ void on_poll() {
 	vista.write(kpaddr_to_bitmask(KPADDR));
 
 	vista.tx_pin_write( LOW );
+	tunedDelay(601);
+	vista.setParity(true);
     SREG = oldSREG;
+	sei();
 	return;
 }
 
-void on_ack(char cbuf[], int *idx) {
+void on_ack(char cbuf[], int *idx, SoftwareSerial &vista) {
 
 	//hav_msg = 0;
-	out_wire_init();
+//	out_wire_init();
 
 	#ifdef DEBUG_KEYS
 	//DEBUG
@@ -666,14 +657,19 @@ void on_ack(char cbuf[], int *idx) {
 	int kpadr = (int)cbuf[1];
 	Serial.print("F6: kp ack addr = ");
 	Serial.println(kpadr, DEC);
+	Serial.print("bitmask is ");
+	Serial.println(kpaddr_to_bitmask(KPADDR), HEX);
 
-Serial.print("bitmask is ");
-Serial.println(kpaddr_to_bitmask(KPADDR), HEX);
-
-
-	//clear memroy
-	memset(cbuf, 0, sizeof(cbuf));
-	*idx = 0;
+	tunedDelay(210);
+	write_chars( vista );
+	if (kpadr == (int)KPADDR) {
+		tunedDelay(600);
+		write_chars( vista );
+		//clear memroy
+		out_wire_init();
+		memset(cbuf, 0, sizeof(cbuf));
+		*idx = 0;
+	}
 }
 
 void on_debug() {
@@ -728,21 +724,8 @@ void on_pin_change() {
 
 	if (mid_ack) return;
 
-	//high
-	if (!low_time && vista.rx_pin_read()) {
-		vista.recv();
-		mid_msg = false;
-		return;
-	}
-
-	if (mid_msg) {
-		vista.recv();
-		return;
-	}
-
-
 	//low
-	if (low_time) {
+	if (low_time && vista.rx_pin_read()) {
 		if ( (millis() - low_time) > 9) {
 
 			on_poll();
@@ -753,10 +736,25 @@ void on_pin_change() {
 			vista.recv();
 			low_time=0;
 		}
+		return;
+	}
+
+
+	//high
+	if (vista.rx_pin_read()) {
+		low_time=0;
+		vista.recv();
+		mid_msg = false;
 	} else {
 		low_time = millis();
 		mid_msg = false;
 	}
+
+	if (mid_msg) {
+		vista.recv();
+		return;
+	}
+
 }
 
 
@@ -803,13 +801,9 @@ void loop()
 		read_chars_single(gcbuf, &gidx);
 		mid_ack = true;
 		vista.setParity(true);
-		tunedDelay(210);
 
-//Serial.println("write chars");
-		write_chars( vista );
+		on_ack(gcbuf, &gidx, vista);
 		mid_ack = false;
-
-		on_ack(gcbuf, &gidx);
 		vista.setParity(false);
 		return;
 	}
@@ -851,12 +845,9 @@ void setup()   {
 	blink_alive();
 
 	out_wire_init();
-/*
-	//clear serialIn buffer
-	memset(serialIn,0,sizeof(serialIn));
-	serialStrIdx = 0;
-*/
 
+	pinMode(A3, OUTPUT);
+	digitalWrite(A3, HIGH);
 	//initialize USB serial
 	Serial.begin(115200);
 	Serial.println("good morning");
