@@ -153,7 +153,12 @@ void read_chars_single(char buf[], int *idx)
 	x++;
 	*idx = idxval;
 }
-void read_chars(int ct, char buf[], int *idx, int limit) 
+
+/*
+returns 1 if there are more chars to read
+returns 0 if serial.avaialable() is false
+*/
+int read_chars(int ct, char buf[], int *idx, int limit) 
 {
 	char c;
 	int  x=0;
@@ -164,12 +169,8 @@ void read_chars(int ct, char buf[], int *idx, int limit)
 		if (vista.available()) {
 			c = vista.read();
 			if (idxval >= limit) {
-				
-				Serial.print("Buffer overflow: ");
-				Serial.println(idxval, DEC);
-				Serial.println(limit, DEC);
 				*idx = idxval;
-				return;
+				return 1;
 			}
 			buf[ idxval ] = c;
 			idxval++;
@@ -178,6 +179,7 @@ void read_chars(int ct, char buf[], int *idx, int limit)
 	}
 	//digitalWrite(ledPin, LOW); 
 	*idx = idxval;
+	return 0;
 }
 
 
@@ -644,6 +646,28 @@ void on_poll() {
 	return;
 }
 
+void ack_f7() {
+
+    uint8_t oldSREG = SREG;
+    cli();
+
+	vista.setParity(false);
+	tunedDelay(100);
+	vista.write(0xff);
+
+	vista.write(0xff);
+
+	vista.write(kpaddr_to_bitmask(KPADDR));
+
+	vista.tx_pin_write( LOW );
+	tunedDelay(3000);
+	vista.setParity(true);
+    SREG = oldSREG;
+	sei();
+	return;
+}
+
+
 void on_ack(char cbuf[], int *idx, SoftwareSerial &vista) {
 
 	//hav_msg = 0;
@@ -782,7 +806,11 @@ void loop()
 		guibuf[ guidx ] = x;
 		guidx++;
 
-		read_chars( msg_len_status -1, guibuf, &guidx, 100);
+		read_chars( msg_len_status -1, guibuf, &guidx, 44);
+		ack_f7();
+		//eat up the remaining 4 pulsing 0x00
+		read_chars( msg_len_status -1, guibuf, &guidx, 4);
+
 
 		on_display(guibuf, &guidx);
 		return;
