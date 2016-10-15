@@ -685,7 +685,6 @@ void on_ack(char cbuf[], int *idx, SoftwareSerial &vista) {
 	Serial.println(kpaddr_to_bitmask(KPADDR), HEX);
 
 	tunedDelay(210);
-	write_chars( vista );
 	if (kpadr == (int)KPADDR) {
 		tunedDelay(600);
 		write_chars( vista );
