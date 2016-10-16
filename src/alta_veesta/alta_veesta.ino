@@ -4,6 +4,7 @@
 #include "alta_veesta.h"
 #include "util.h"
 #include <avr/interrupt.h>
+#include <avr/power.h> //for F_CPU
 
 #ifdef HAVE_NETWORK
 #include <utility/w5100.h>
@@ -573,7 +574,6 @@ void on_poll() {
 	if ( !have_message() ) return;
 	vista.setParity(false);
 
-
 	seq_poll++;
 	if (seq_poll > 1) {
 		seq_poll = 0;
@@ -585,11 +585,22 @@ void on_poll() {
 
 	vista.write(0xff);
 
-	tunedDelay(540);
+
+	//TODO for 16Mhz these times just seem made up
+	if (F_CPU == 16000000)  {
+		tunedDelay(1100);
+	}else{
+		tunedDelay(540);
+	}
 
 	vista.write(0xff);
 
-	tunedDelay(575);
+
+	if (F_CPU == 16000000)  {
+		tunedDelay(1150);
+	} else {
+		tunedDelay(575);
+	}
 
 
 	//keypad addr 18 appears to be 0xF7
@@ -652,7 +663,13 @@ void ack_f7() {
     cli();
 
 	vista.setParity(false);
-	tunedDelay(100);
+
+	//TODO for 16Mhz these times just seem made up
+	if (F_CPU == 16000000)  {
+		tunedDelay(590);
+	} else {
+		tunedDelay(100);
+	}
 	vista.write(0xff);
 
 	vista.write(0xff);
@@ -750,7 +767,6 @@ void on_pin_change() {
 	//low
 	if (low_time && vista.rx_pin_read()) {
 		if ( (millis() - low_time) > 9) {
-
 			on_poll();
 			low_time=0;
 		} else {
