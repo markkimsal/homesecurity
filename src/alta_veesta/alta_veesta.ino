@@ -933,4 +933,23 @@ ISR(PCINT0_vect)
 }
 #endif
 
+#if defined(PCINT1_vect)
+ISR(PCINT1_vect)
+{
+  on_pin_change();
+}
+#endif
+
+#if defined(PCINT2_vect)
+ISR(PCINT2_vect)
+{
+  on_pin_change();
+}
+#endif
+#if defined(PCINT3_vect)
+ISR(PCINT3_vect)
+{
+  on_pin_change();
+}
+#endif
 
