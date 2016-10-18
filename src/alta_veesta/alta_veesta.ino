@@ -108,7 +108,7 @@ void read_chars_dyn(char buf[], int *idx, int limit)
 {
 	char c;
 	int  ct = 1;
-	int  x=0;
+	int  x  = 0;
 	int idxval = *idx;
 
 	digitalWrite(ledPin, HIGH);   // set the LED on  
@@ -255,14 +255,7 @@ no alarm
 void on_status(char cbuf[], int *idx) {
 
 
-	//this might be a mistaken read...
-	//also, F2 00 should read no more bytes
-	//F2 00  are display messages
-	if ( cbuf[1] == 0x00) {
-	//	return;
-	}
-
-	#ifdef DEBUG_STATUS
+	#if DEBUG_STATUS
 	Serial.print("F2: {");
 
 	//first 6 bytes are headers
@@ -286,10 +279,10 @@ void on_status(char cbuf[], int *idx) {
 	Serial.println("}");
 	#endif
 
-	//F2 messages with less than 16 bytes don't seem to have
+	//F2 messages with 18 bytes or less don't seem to have
 	// any important information
 	if ( 19 > (int) cbuf[1]) {
-		#ifdef DEBUG_STATUS
+		#if DEBUG_STATUS
 		Serial.println("F2: Unknown message - too short");
 		#endif
 
@@ -299,7 +292,7 @@ void on_status(char cbuf[], int *idx) {
 		return;
 	}
 
-	#ifdef DEBUG_STATUS
+	#if DEBUG_STATUS
 	//19, 20, 21, 22
 	Serial.print("F2: 19 = ");
 	print_hex(cbuf[19], 8);
@@ -379,17 +372,10 @@ void on_status(char cbuf[], int *idx) {
 		strncpy(alarm_buf[0],  cbuf, 30);
 	} else if ( !armed  && fault  && away && !exit_delay) {
 		//away bit always flips to 0x02 when alarm is canceled
-//		Serial.println ("F2: alarm canceled");
 		Serial.println ("{\"type\": \"cancel\"}");
 	} else {
 		//Serial.println ("F2: no alarm");
 	}
-
-	//#ifdef DEBUG_STATUS
-	//DEBUG
-	//debug_cbuf(cbuf, idx, false);
-	//#endif
-
 
 	memset(cbuf, 0, sizeof(cbuf));
 	*idx = 0;
@@ -710,20 +696,18 @@ void on_ack(char cbuf[], int *idx, SoftwareSerial &vista) {
 void readConsole() {
 
 	const int termChar = 13; //Terminate lines with CR
-	int inByte       = 0;
+	int inByte         = 0;
 
 	if (!Serial.available()) return;
 
 
 	//If we see data (inByte > 0) and that data isn't a carriage return
 	do {
-//Serial.print("Serial available ");
 		inByte = Serial.read();
-//Serial.print("I received: ");
-//Serial.println(inByte, DEC);
-		if (inByte < 0) break;
 		if (inByte == termChar) break;
-
+		if (inByte < 32 || inByte > 126) {
+			break;
+		}
 		out_wire_queue(inByte);
 	} while (Serial.available());
 
@@ -830,8 +814,9 @@ void loop()
 		gcbuf[ gidx ] = x;
 		gidx++;
 
-		read_chars_dyn( gcbuf, &gidx, 30);
-
+		read_chars_single(gcbuf, &gidx);
+		int len = gcbuf[ gidx-1 ];
+		read_chars(len, gcbuf, &gidx, 30);
 		on_status(gcbuf, &gidx);
 		return;
 	}
