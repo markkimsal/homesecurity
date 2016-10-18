@@ -785,7 +785,7 @@ void loop()
 		guibuf[ guidx ] = x;
 		guidx++;
 
-		read_chars( msg_len_status -1, guibuf, &guidx, 44);
+		read_chars( msg_len_status -1, guibuf, &guidx, 45);
 		ack_f7();
 		//eat up the remaining 4 pulsing 0x00
 		read_chars( msg_len_status -1, guibuf, &guidx, 4);
