@@ -33,6 +33,7 @@ void out_wire_queue(char byt ) {
 	outbuf[outbufIdx] = byt; // Save the data in a character array
 	outbufIdx++; //Increment position in array
 }
+/*
 void ask_for_write(
 		SoftwareSerial &vistaSerial
 ){
@@ -41,6 +42,7 @@ void ask_for_write(
 	vistaSerial.write(0xff);
 	vistaSerial.write(0xfb);
 }
+*/
 
 bool have_message() {
 	return (outbufIdx > 0);
@@ -85,33 +87,32 @@ void write_chars(
 	// result in errors
 	int checksum = 0;
 	for(int x =0; x < outbufIdx; x++) {
+		//translate digits between 0-9 to hex/decimal
 		if (outbuf[x] >= 0x30 && outbuf[x] <= 0x39) {
 			outbuf[x] -= 0x30;
 			checksum += outbuf[x];
-
-			vistaSerial.write((int)outbuf[x]);
-			vistaSerial.flush();
 		}
+		//translate * to 0x0b
 		if (outbuf[x] == 0x23) {
 			outbuf[x] = 0x0B;
 			checksum += outbuf[x];
-			vistaSerial.write((int)outbuf[x]);
-			vistaSerial.flush();
 		}
+		//translate # to 0x0a
 		if (outbuf[x] == 0x2A) {
 			outbuf[x] = 0x0A;
 			checksum += outbuf[x];
-			vistaSerial.write((int)outbuf[x]);
-			vistaSerial.flush();
 		}
+		//translate A to 0x1C (function key A)
+		//translate B to 0x1D (function key B)
+		//translate C to 0x1E (function key C)
+		//translate D to 0x1F (function key D)
+		if (outbuf[x] >= 0x41 && outbuf[x] <= 0x44) {
+			outbuf[x] = outbuf[x] - 0x25;
+			checksum += outbuf[x];
+		}
+		vistaSerial.write((int)outbuf[x]);
 	}
 
-	/*
-	print_hex((int)outbufIdx + 1, 8);
-	for(int x =0; x < outbufIdx; x++) {
-	print_hex((int)outbuf[x], 8);
-	}
-	*/
 	int chksum = 0x100 - (header + checksum + (int)outbufIdx+1);
 
 	vistaSerial.write((int) (0x100-(header+checksum+ outbufIdx+1)) );
