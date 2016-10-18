@@ -687,19 +687,14 @@ void ack_f7() {
 
 void on_ack(char cbuf[], int *idx, SoftwareSerial &vista) {
 
-	//hav_msg = 0;
-//	out_wire_init();
-
-	#ifdef DEBUG_KEYS
-	//DEBUG
-//	debug_cbuf(cbuf, idx, false);
-	#endif
-
 	int kpadr = (int)cbuf[1];
+
+	#if DEBUG_KEYS
 	Serial.print("F6: kp ack addr = ");
 	Serial.println(kpadr, DEC);
 	Serial.print("bitmask is ");
 	Serial.println(kpaddr_to_bitmask(KPADDR), HEX);
+	#endif
 
 	tunedDelay(210);
 	if (kpadr == (int)KPADDR) {
@@ -710,11 +705,6 @@ void on_ack(char cbuf[], int *idx, SoftwareSerial &vista) {
 		memset(cbuf, 0, sizeof(cbuf));
 		*idx = 0;
 	}
-}
-
-void on_debug() {
-	int tmp_idx = 29;
-	//debug_cbuf(alarm_buf[0], &tmp_idx, false);
 }
 
 void readConsole() {
@@ -740,24 +730,6 @@ void readConsole() {
 	#ifdef DEBUG
 		debug_out_buf();
 	#endif
-
-
-/*
-
-	if (inByte == termChar) {
-		serialIn[serialStrIdx] = 0; //Null terminate the serialIn
-
-		//run commands
-		if (strncmp( serialIn, "debug", 5) == 0 ) {
-			on_debug();
-		} else {
-			//write_chars( vista, serialIn, &serialStrIdx, true );
-			//ask_for_write(vista);
-			//hav_msg = 1;
-		}
-
-	}
-*/
 }
 
 void on_pin_change() {
