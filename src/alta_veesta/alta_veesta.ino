@@ -331,8 +331,10 @@ void on_status(char cbuf[], int *idx) {
 	//2 is ignore faults (like exit delay)
 	//4 is a alarm 
 	//6 is a fault that does not cause an alarm
+	//8 is for panic alarm.
 	short exit_delay = (cbuf[22] & 0x02);
-	short fault = (cbuf[22] & 0x04);
+	short fault      = (cbuf[22] & 0x04);
+	short panic     = (cbuf[22] & 0x08);
 
 	//print as JSON
 	Serial.print("{\"type\":\"status\"");
@@ -357,6 +359,12 @@ void on_status(char cbuf[], int *idx) {
 	}
 	Serial.print(", \"faulted\": ");
 	if (fault) {
+		Serial.print("\"yes\"");
+	} else {
+		Serial.print("\"no\"");
+	}
+	Serial.print(", \"panic\": ");
+	if (panic) {
 		Serial.print("\"yes\"");
 	} else {
 		Serial.print("\"no\"");
