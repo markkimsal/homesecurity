@@ -579,68 +579,11 @@ void on_poll() {
 
 	vista.write(0xff);
 
-
-	//TODO for 16Mhz these times just seem made up
-	if (F_CPU == 16000000)  {
-		tunedDelay(1100);
-	}else{
-		tunedDelay(540);
-	}
-
+	//just burn time waiting for CTS
+	//interrupts take too much overhead on 8Mhz
+	while(!vista.rx_pin_read()){}
 	vista.write(0xff);
-
-
-	if (F_CPU == 16000000)  {
-		tunedDelay(1150);
-	} else {
-		tunedDelay(575);
-	}
-
-
-	//keypad addr 18 appears to be 0xF7
-	//or 1111-0111
-
-	//keypad addr 20 appears to be 0xFB
-	//or 1111-1011
-
-	//keypad addr 19 appears to be 0xFD
-	//or 1111-1101
-
-	//keypad addr 18 appears to be 0xFE
-	//or 1111-1110
-
-
-	//vista.write(0xFE);
-	//vista.write(0x7F);
-	//adjust timing until kpaddr 20 works
-	//0xEF should be 20
-
-	//new tests
-	//with 236*4
-	//0xFE is kpaddr 18 (1111-1110)
-	//0xFD is kpaddr 19 (1111-1101)
-
-	//with 1000
-	//0xFE is kpaddr 18 (1111-1110)
-	//0xFD is kpaddr 18 (1111-1101)
-	//0xFB is kpaddr 18 (1111-1011)
-
-	//with 236
-	//0xFE broke
-	//0xFB is kpaddr 18 (1111-1011)
-	//0xEF broke
-
-	//with 236 * 2
-	//0xFB is kpaddr 18
-	//0xFD is kpaddr 18
-	//0xEF broke
-
-	//with tunedDelay(208*5);
-	//0x7f is 18
-	//0xBf is 18
-	//0xDf is 18
-	//0xEF doesn't work
-    //0xFD is 17;
+	while(!vista.rx_pin_read()){}
 	vista.write(kpaddr_to_bitmask(KPADDR));
 
 	vista.tx_pin_write( LOW );
@@ -658,15 +601,14 @@ void ack_f7() {
 
 	vista.setParity(false);
 
-	//TODO for 16Mhz these times just seem made up
-	if (F_CPU == 16000000)  {
-		tunedDelay(590);
-	} else {
-		tunedDelay(100);
-	}
+	//just burn time waiting for CTS
+	//interrupts take too much overhead on 8Mhz
+	while(!vista.rx_pin_read()){}
 	vista.write(0xff);
+	while(!vista.rx_pin_read()){}
 
 	vista.write(0xff);
+	while(!vista.rx_pin_read()){}
 
 	vista.write(kpaddr_to_bitmask(KPADDR));
 
