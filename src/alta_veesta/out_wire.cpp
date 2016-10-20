@@ -70,10 +70,8 @@ void write_chars(
 	//int header = KPADDR & 0x3F;
 
 	vistaSerial.write((int)header);
-	vistaSerial.flush();
 
 	vistaSerial.write((int) outbufIdx +1);
-	vistaSerial.flush();
 
 	/*
 	print_hex((int)header, 8);
@@ -115,11 +113,25 @@ void write_chars(
 
 	int chksum = 0x100 - (header + checksum + (int)outbufIdx+1);
 
-	vistaSerial.write((int) (0x100-(header+checksum+ outbufIdx+1)) );
-	vistaSerial.flush();
+	//vistaSerial.write((int) (0x100-(header+checksum+ outbufIdx+1)) );
+	vistaSerial.write(chksum);
 
-	//print_hex((int)chksum, 8);
-    //Serial.println();
+	#if DEBUG_KEYS
+	Serial.print("Packet Header: ");
+	print_hex(header, 8);
+	Serial.println();
+
+	Serial.print("Packet: ");
+	for(int x =0; x < outbufIdx; x++) {
+	print_hex(outbuf[x], 8);
+	}
+	Serial.println();
+
+	Serial.print("Checksum: ");
+	print_hex(chksum, 8);
+	Serial.println();
+	#endif
+
 }
 
 void debug_out_buf()
