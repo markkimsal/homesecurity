@@ -849,6 +849,7 @@ void setup()   {
 	vista.begin( vistaBaud );
 }
 
+//Pin Change INTerrupts
 #if defined(PCINT0_vect)
 ISR(PCINT0_vect)
 {
@@ -857,22 +858,13 @@ ISR(PCINT0_vect)
 #endif
 
 #if defined(PCINT1_vect)
-ISR(PCINT1_vect)
-{
-  on_pin_change();
-}
+ISR(PCINT1_vect, ISR_ALIASOF(PCINT0_vect));
 #endif
 
 #if defined(PCINT2_vect)
-ISR(PCINT2_vect)
-{
-  on_pin_change();
-}
-#endif
-#if defined(PCINT3_vect)
-ISR(PCINT3_vect)
-{
-  on_pin_change();
-}
+ISR(PCINT2_vect, ISR_ALIASOF(PCINT0_vect));
 #endif
 
+#if defined(PCINT3_vect)
+ISR(PCINT3_vect, ISR_ALIASOF(PCINT0_vect));
+#endif
