@@ -1,16 +1,16 @@
 #ifndef config_h
 #define config_h
 
-#define KPADDR 22
+#define KPADDR 18
 
 #define DEBUG 0
-#define DEBUG_STATUS  0
-#define DEBUG_KEYS    0
+#define DEBUG_STATUS  1
+#define DEBUG_KEYS    1
 //#define DEBUG_DISPLAY 0
 
 
-#define RX_PIN 8
-#define TX_PIN 9
+#define RX_PIN 12
+#define TX_PIN 11
 
 //try to enable network and DHCP?
 //#define HAVE_NETWORK 1

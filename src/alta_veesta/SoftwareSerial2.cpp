@@ -33,8 +33,8 @@ http://arduiniana.org.
 // oscilloscope or logic analyzer.  Beware: it also slightly modifies
 // the bit times, so don't rely on it too much at high baud rates
 #define _DEBUG 0
-#define _DEBUG_PIN1 11
-#define _DEBUG_PIN2 13
+#define _DEBUG_PIN1 8
+#define _DEBUG_PIN2 9
 // 
 // Includes
 // 
