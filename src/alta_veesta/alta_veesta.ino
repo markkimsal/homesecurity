@@ -6,13 +6,13 @@
 #include <avr/interrupt.h>
 #include <avr/power.h> //for F_CPU
 
+
 #ifdef HAVE_NETWORK
 #include <utility/w5100.h>
 #include "api_call.h"
 #include <SPI.h>
 #include <Ethernet.h>
 
-byte mac[] = MAC_ADDR;
 #endif
 
 #ifdef HAVE_OLED
