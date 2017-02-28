@@ -25,6 +25,10 @@ int msg_len_ack = 2;
 
 volatile int  seq_poll = 0;
 
+char combuf[30];
+int  combufidx = 0;
+bool reading_command = false;
+
 char gcbuf[30];
 int  gidx = 0;
 int  lastgidx = 0;
@@ -566,14 +570,32 @@ void on_display(char cbuf[], int *idx) {
 void on_poll() {
 
 	if ( !have_message() ) return;
-	vista.setParity(false);
 
+	int KPADDR = fetch_kpaddr();
+
+	vista.setParity(false);
+	digitalWrite(ledPin, HIGH);
+	/*
+	digitalWrite(TX_PIN, HIGH);
+
+    uint8_t oldSREG = SREG;
+    cli();
+	tunedDelay(3000);
+	digitalWrite(ledPin, LOW);
+	digitalWrite(TX_PIN, LOW);
+    SREG = oldSREG;
+	sei();
+	return;
+	*/
+
+/*
 	seq_poll++;
 	if (seq_poll > 1) {
 		seq_poll = 0;
 		low_time = 0;
 		return;
 	}
+	*/
     uint8_t oldSREG = SREG;
     cli();
 
@@ -589,6 +611,7 @@ void on_poll() {
 	vista.tx_pin_write( LOW );
 	tunedDelay(601);
 	vista.setParity(true);
+	digitalWrite(ledPin, LOW);
     SREG = oldSREG;
 	sei();
 	return;
@@ -598,6 +621,8 @@ void ack_f7() {
 
     uint8_t oldSREG = SREG;
     cli();
+
+	int KPADDR = fetch_kpaddr();
 
 	vista.setParity(false);
 
@@ -625,11 +650,15 @@ void on_ack(char cbuf[], int *idx, SoftwareSerial &vista) {
 
 	int kpadr = (int)cbuf[1];
 
+	int KPADDR = fetch_kpaddr();
 	#if DEBUG_KEYS
 	Serial.print("F6: kp ack addr = ");
 	Serial.println(kpadr, DEC);
-	Serial.print("bitmask is ");
+	Serial.print("F6: bitmask is ");
 	Serial.println(kpaddr_to_bitmask(KPADDR), HEX);
+
+	Serial.print("F6: my kpaddr is ");
+	Serial.println(KPADDR, DEC);
 	#endif
 
 	tunedDelay(210);
@@ -643,6 +672,37 @@ void on_ack(char cbuf[], int *idx, SoftwareSerial &vista) {
 	}
 }
 
+
+/**
+ * Execute a TT+ command
+ */
+void execute_command() {
+	String command = String(combuf);
+	if (command.substring(0,3) != "TT+") {
+		return;
+	}
+	String subcommand = command.substring(3, command.indexOf('='));
+	String value = command.substring(command.indexOf('=')+1);
+	if (subcommand == "KPADDR") {
+		if (!store_kpaddr( value.toInt() )) {
+		Serial.print("Error: failed to set kpaddr: ");
+		Serial.println(value.toInt());
+		}
+	}
+	if (subcommand == "SYSINFO") {
+		write_sys_info();
+	}
+
+	#ifdef DEBUG
+	Serial.print("\nGot command: ");
+	Serial.print(subcommand);
+	Serial.print(" = ");
+	Serial.print(value);
+	Serial.print("\n");
+	#endif
+
+}
+
 void readConsole() {
 
 	const int termChar = 13; //Terminate lines with CR
@@ -651,20 +711,40 @@ void readConsole() {
 	if (!Serial.available()) return;
 
 
-	//If we see data (inByte > 0) and that data isn't a carriage return
 	do {
 		inByte = Serial.read();
-		if (inByte == termChar) break;
+		if (inByte == termChar) {
+			if (combufidx > 0) {
+				execute_command();
+				memset(combuf, 0, sizeof(combuf));
+				combufidx = 0;
+			}
+
+			reading_command = false;
+			break;
+		}
 		if (inByte < 32 || inByte > 126) {
+			break;
+		}
+		//if bytes are TT+ then issue special command
+		if (inByte == 'T') {
+			reading_command = true;
+		}
+		if (reading_command) {
+			combuf[ combufidx ] = inByte;
+			combufidx++;
 			break;
 		}
 		out_wire_queue(inByte);
 	} while (Serial.available());
 
 	#ifdef DEBUG
-		debug_out_buf();
+		if (!reading_command) {
+			debug_out_buf();
+		}
 	#endif
 }
+
 
 void on_pin_change() {
 
@@ -789,6 +869,8 @@ void send_email() {
 
 void setup()   {                
 
+
+	memset(combuf, 0, sizeof(combuf));
 
 	// initialize the digital pin as an output:
 	pinMode(ledPin, OUTPUT);     

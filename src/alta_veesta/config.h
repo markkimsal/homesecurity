@@ -1,7 +1,8 @@
 #ifndef config_h
 #define config_h
 
-#define KPADDR 18
+//#define KPADDR 18
+const char VERSION[6] = "0.9.9";
 
 #define DEBUG 0
 #define DEBUG_STATUS  1

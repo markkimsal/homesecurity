@@ -61,6 +61,7 @@ void write_chars(
 
 	if (outbufIdx == 0) {return;}
 
+	int KPADDR = fetch_kpaddr();
 	int header = ((++seq << 6) & 0xc0) | (KPADDR & 0x3F);
 
 

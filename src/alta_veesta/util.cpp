@@ -1,4 +1,41 @@
 #include "alta_veesta.h"
+#include <EEPROM.h>
+
+/**
+ * First 64 bytes are reserved
+ */
+#define KPADDR_EEPROM_OFFSET 64
+
+/**
+ * Load KPADDR from EEPROM
+ * Use 16 if no address has been stored
+ */
+uint8_t fetch_kpaddr() {
+	int kpaddr = EEPROM.read(KPADDR_EEPROM_OFFSET);
+	if (kpaddr == 0) {
+		return 16;
+	}
+	return kpaddr;
+}
+
+/**
+ * Store KPADDR to EEPROM
+ */
+bool store_kpaddr(int addr) {
+	if (addr < 16 || addr > 25) {
+		return false;
+	}
+	EEPROM.write(KPADDR_EEPROM_OFFSET, addr);
+	return true;
+}
+
+void write_sys_info() {
+	Serial.print(F("{\"type\":\"sysinfo\",\"version\":\""));
+	Serial.print(VERSION);
+	Serial.print(F("\",\"kpaddr\":\""));
+	Serial.print(fetch_kpaddr(), DEC);
+	Serial.println(F("\"}"));
+}
 
 /**
  * 16 is a valid address, but not for keypads
