@@ -31,6 +31,16 @@ Please note that it may be illegal in your area to trasmit signal information fr
 # Config
 There are a few configurations available.  Most simply print CSV (Excel) compatible debugging of each signal.  Signals are decoded in ASCII, decimal, and hexidecimal values and printed to the serial port as comma separated (the last item has an extra comma after it, it's not missing data)
 
+The keypad address is now configurable at runtime (and not via the config.h anymore).
+
+
+Send TT+KPADDR=18 via the serial terminal to set the operating keypad address to 18.  TT+ is similar to Hayes AT+ modem commands except that A is the encoding for one of the macro buttons on the left of the keypad.
+
+```
+TT+KPADDR=20
+```
+
+
 You can also setup your web server configuration in the config.h file.  The processing power on the Arduino is limited so you cannot do SSL or even e-mail (because most gateways require TLS wrapped SMTP connections).  Sending a small packet to a web server allows you to extend the capabilities of the Arduino with a more powerful CPU.
 
 # Hardware Setup
