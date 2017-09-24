@@ -882,7 +882,7 @@ void setup()   {
 	digitalWrite(A3, HIGH);
 	//initialize USB serial
 	Serial.begin(115200);
-	Serial.println("good morning");
+	Serial.println("\"good morning\"");
 
 	#ifdef HAVE_OLED
 	oled_test();
@@ -927,7 +927,11 @@ void setup()   {
 	#endif
 	#endif
 
-	Serial.println("Starting vista keypad bus"); 
+	Serial.println("\"Starting vista keypad bus\"");
+	Serial.print("\"Using kpaddr: ");
+	Serial.print(fetch_kpaddr());
+	Serial.println("\"");
+
 	vista.begin( vistaBaud );
 }
 
