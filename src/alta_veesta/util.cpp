@@ -150,3 +150,19 @@ void debug_cbuf(char cbuf[], int *idx, bool clear)
 	}
 }
 
+
+void print_unknown_json(char cbuf[]) {
+
+	Serial.print("{\"type\":\"unkown\",\"bytes\":[");
+	int len = (int) cbuf[1];
+
+	for (int x = 0; x < 19 ; x++) {
+		if (x > 1) 
+		Serial.print(",");
+		Serial.print("\"");
+		print_hex( cbuf[x], 8);
+		Serial.print("\"");
+	}
+	Serial.println("]}");
+}
+

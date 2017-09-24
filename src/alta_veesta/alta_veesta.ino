@@ -289,6 +289,8 @@ void on_status(char cbuf[], int *idx) {
 		#if DEBUG_STATUS
 		Serial.println("F2: Unknown message - too short");
 		#endif
+		//print unkonw messages as unknown type and list all bytes
+		print_unknown_json( cbuf );
 
 		//clear memory
 		memset(cbuf, 0, sizeof(cbuf));
@@ -837,7 +839,7 @@ void loop()
 		return;
 	}
 
-	//state chage?
+	//state change?
 	if ((int)x == 0xFFFFFFF2) {
 		//debug_cbuf(gcbuf, &gidx, true);
 
@@ -850,6 +852,20 @@ void loop()
 		on_status(gcbuf, &gidx);
 		return;
 	}
+
+	//unknown 0xFF
+	if ((int)x == 0xFFFFFFFf) {
+
+		gcbuf[ gidx ] = x;
+		gidx++;
+
+		read_chars_single(gcbuf, &gidx);
+		int len = gcbuf[ gidx-1 ];
+		read_chars(len, gcbuf, &gidx, 30);
+		print_unknown_json(gcbuf);
+		return;
+	}
+
 
 Serial.print("Unknown char: ");
 print_hex((char)x, 8);
