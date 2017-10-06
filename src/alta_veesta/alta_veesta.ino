@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 #include "alta_veesta.h"
 #include "util.h"
@@ -63,8 +63,8 @@ int syncBuf = 0;
 int vistaBaud = 4800;
 
 
-/* static */ 
-inline void tunedDelay(uint16_t delay) { 
+/* static */
+inline void tunedDelay(uint16_t delay) {
   uint8_t tmp=0;
 
   asm volatile("sbiw    %0, 0x01 \n\t"
@@ -102,19 +102,19 @@ void blink_dhcp() {
 /**
  * F2,0B,60,6D,0D,45,44,A0,
  *
- * 
+ *
  * , ,c,m, ,E,C, , ,A,l,a,r,m, ,C,a,n,c,e,l,e,d,1,5,',
  * F2,1F,63,6D,0D,45,43,F5,EC,41,6C,61,72,6D,20,43,61,6E,63,65,6C,65,64,31,35,27,
  *
  */
-void read_chars_dyn(char buf[], int *idx, int limit) 
+void read_chars_dyn(char buf[], int *idx, int limit)
 {
 	char c;
 	int  ct = 1;
 	int  x  = 0;
 	int idxval = *idx;
 
-	digitalWrite(ledPin, HIGH);   // set the LED on  
+	digitalWrite(ledPin, HIGH);   // set the LED on
 
 	while (!vista.available()) {
 	}
@@ -140,11 +140,11 @@ void read_chars_dyn(char buf[], int *idx, int limit)
 			x++;
 		}
 	}
-	digitalWrite(ledPin, LOW); 
+	digitalWrite(ledPin, LOW);
 	*idx = idxval;
 }
 
-void read_chars_single(char buf[], int *idx) 
+void read_chars_single(char buf[], int *idx)
 {
 	char c;
 	int  x=0;
@@ -162,12 +162,12 @@ void read_chars_single(char buf[], int *idx)
 returns 1 if there are more chars to read
 returns 0 if serial.avaialable() is false
 */
-int read_chars(int ct, char buf[], int *idx, int limit) 
+int read_chars(int ct, char buf[], int *idx, int limit)
 {
 	char c;
 	int  x=0;
 	int idxval = *idx;
-	//digitalWrite(ledPin, HIGH);   // set the LED on  
+	//digitalWrite(ledPin, HIGH);   // set the LED on
 	while (x < ct) {
 
 		if (vista.available()) {
@@ -181,7 +181,7 @@ int read_chars(int ct, char buf[], int *idx, int limit)
 			x++;
 		}
 	}
-	//digitalWrite(ledPin, LOW); 
+	//digitalWrite(ledPin, LOW);
 	*idx = idxval;
 	return 0;
 }
@@ -259,11 +259,12 @@ void on_status(char cbuf[], int *idx) {
 
 
 	#if DEBUG_STATUS
+	/*
 	Serial.print("F2: {");
 
 	//first 6 bytes are headers
 	for (int x = 1; x < 7 ; x++) {
-		if (x > 1) 
+		if (x > 1)
 		Serial.print(",");
 		print_hex( cbuf[x], 8);
 	}
@@ -324,7 +325,7 @@ void on_status(char cbuf[], int *idx) {
 	//20th spot is away / stay
 	// this bit is really confusing
 	// it clearly switches to 2 when you set away mode
-	// but it is also 0x02 when an alarm is canceled, 
+	// but it is also 0x02 when an alarm is canceled,
 	// but not cleared - even if you are in stay mode.
 	short away = 0x02 & cbuf[20];
 
@@ -334,7 +335,7 @@ void on_status(char cbuf[], int *idx) {
 	//22nd spot is for alarm types
 	//1 is no alarm
 	//2 is ignore faults (like exit delay)
-	//4 is a alarm 
+	//4 is a alarm
 	//6 is a fault that does not cause an alarm
 	//8 is for panic alarm.
 	short exit_delay = (cbuf[22] & 0x02);
@@ -532,7 +533,7 @@ void on_display(char cbuf[], int *idx) {
                     print_hex( cbuf[x], 8);
                     Serial.print("\"");
                 }
-                
+
                 break;
             default:
 //                print_hex( cbuf[x], 8);
@@ -962,13 +963,13 @@ void send_email() {
 }
 #endif
 
-void setup()   {                
+void setup()   {
 
 
 	memset(combuf, 0, sizeof(combuf));
 
 	// initialize the digital pin as an output:
-	pinMode(ledPin, OUTPUT);     
+	pinMode(ledPin, OUTPUT);
 	blink_alive();
 
 	out_wire_init();
@@ -999,11 +1000,11 @@ void setup()   {
 	W5100.setRetransmissionCount(3);
 
 	Serial.print("Got DHCP IP: ");
-	Serial.println(Ethernet.localIP()); 
+	Serial.println(Ethernet.localIP());
 	#else
 	Serial.print("Starting ethernet with static IP... ");
 	Ethernet.begin(mac, STATIC_IP);
-	Serial.println(Ethernet.localIP()); 
+	Serial.println(Ethernet.localIP());
 	#endif
 	// print your local IP address:
 	Serial.println("Triggering fake alarm for testing... ");
