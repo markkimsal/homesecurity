@@ -26,6 +26,8 @@ char outbuf[20];
 
 int seq = 1;
 
+int retries = 0;
+
 void out_wire_init() {
 	//clear outbuf buffer
 	memset(outbuf,0,sizeof(outbuf));
@@ -62,6 +64,16 @@ void write_chars(
 ){
 
 	if (outbufIdx == 0) {return;}
+
+	retries++;
+	//if retries are getting out of control with no successfull callback
+	//just clear the buffer
+	//TODO: maybe only clear one byte at a time?
+	if (retries > 10) {
+		out_wire_init();
+		retries = 0;
+		return;
+	}
 
 	int KPADDR = fetch_kpaddr();
 	int header = ((++seq << 6) & 0xc0) | (KPADDR & 0x3F);
@@ -144,6 +156,7 @@ void key_ack_complete(void *data) {
 	//let's pretend we didn't get any new key presses
 	//between the send and the expected response byte
 	out_wire_init();
+	retries = 0;
 	//TODO: only erase bytes that were sent from outbuf
 	//make a shadow copy of outbufIdx when callback is set
 	//subtract copy from outbufIdx
