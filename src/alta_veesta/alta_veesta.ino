@@ -359,6 +359,12 @@ void on_status(char cbuf[], int *idx) {
 	} else {
 		Serial.print("\"no\"");
 	}
+	Serial.print(", \"exit_delay\": ");
+	if (exit_delay) {
+		Serial.print("\"yes\"");
+	} else {
+		Serial.print("\"no\"");
+	}
 	Serial.print(", \"mode\": ");
 	if (away) {
 		Serial.print("\"away\"");
