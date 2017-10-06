@@ -56,7 +56,6 @@ bool   mid_ack = false;
 #include "out_wire.h"
 
 
-#include "SoftwareSerial2.h"
 SoftwareSerial vista(RX_PIN, TX_PIN, true);
 
 int ledPin =  13;    // LED connected to digital pin 13
@@ -391,8 +390,8 @@ void on_status(char cbuf[], int *idx) {
 		//Serial.println ("F2: no alarm");
 	}
 
-	memset(cbuf, 0, sizeof(cbuf));
-	*idx = 0;
+//	memset(cbuf, 0, sizeof(cbuf));
+//	*idx = 0;
 }
 
 void on_display(char cbuf[], int *idx) {
@@ -647,6 +646,57 @@ void ack_f7() {
 	return;
 }
 
+void on_lrr(char cbuf[], int *idx, SoftwareSerial &vista) {
+
+	char lcbuf[12];
+	int  lcbuflen = 0;
+
+	int len = cbuf[2];
+	if (len == 0 ) { return; }
+
+	print_unknown_json( cbuf , *idx );
+	char type = cbuf[3];
+
+	tunedDelay(10);
+	//0x52 means respond with only cycle message
+	//0x48 means same thing
+	//, i think 0x42 and and 0x58 are the same
+	if (type == (char) 0x52
+	  || type == (char) 0x48
+
+	) {
+		lcbuf[0] = (char)(cbuf[1]);
+		lcbuflen++;
+	} else if (type == (char) 0x58) {
+		//just respond, but 0x58s have lots of info
+
+		lcbuf[0] = (char)(cbuf[1]);
+		lcbuflen++;
+	} else {
+
+		lcbuf[0] = (char)((cbuf[1] + 0x40) & 0xFF);
+		lcbuf[1] = (char) 0x04;
+		lcbuf[2] = (char) 0x00;
+		lcbuf[3] = (char) 0x00;
+		lcbuf[4] = (char) 0x00;
+		lcbuflen = 5;
+	}
+
+	int chksum = 0;
+	for (int x=0; x<lcbuflen; x++) {
+		chksum += lcbuf[x];
+	}
+	chksum -= 1;
+	chksum = chksum ^ 0xFF;
+	lcbuf[lcbuflen] = chksum;
+	lcbuflen++;
+
+	//print_unknown_json( lcbuf , lcbuflen);
+	for (int x=0; x<lcbuflen; x++) {
+		vista.write(lcbuf[x]);
+	}
+}
+
 
 void on_ack(char cbuf[], int *idx, SoftwareSerial &vista) {
 
@@ -803,6 +853,15 @@ void loop()
 		//Serial.println(".");
 		return;
 	}
+	switch_first_byte(x, vista);
+
+	//clear buffer
+	memset(gcbuf, 0, sizeof(gcbuf));
+	gidx = 0;
+
+}
+
+void switch_first_byte(int x, SoftwareSerial vista) {
 
 	//start of new message
 	if ((int)x == 0xFFFFFFF7) {
@@ -853,6 +912,27 @@ void loop()
 		return;
 	}
 
+	//Long Range Radio (LRR)
+	if ((int)x == 0xFFFFFFF9) {
+		memset(gcbuf, 0, sizeof(gcbuf));
+		gidx = 0;
+
+		//store first byte in global char buf
+		gcbuf[ gidx ] = x;
+		gidx++;
+
+		//ready cycle
+		read_chars_single(gcbuf, &gidx);
+		//read len
+		read_chars_single(gcbuf, &gidx);
+
+		read_chars((int)gcbuf[2] , gcbuf, &gidx, 30);
+
+		on_lrr(gcbuf, &gidx, vista);
+		return;
+	}
+
+
 	//unknown 0xFF
 	if ((int)x == 0xFFFFFFFf) {
 
@@ -866,10 +946,9 @@ void loop()
 		return;
 	}
 
-
-Serial.print("Unknown char: ");
-print_hex((char)x, 8);
-Serial.println();
+	Serial.print("Unknown char: ");
+	print_hex((char)x, 8);
+	Serial.println();
 }
 
 
