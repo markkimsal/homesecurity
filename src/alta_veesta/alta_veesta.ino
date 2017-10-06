@@ -281,16 +281,22 @@ void on_status(char cbuf[], int *idx) {
 	}
 
 	Serial.println("}");
+	*/
+	#endif
+
+	#if DEBUG_STATUS
+	print_unknown_json( cbuf );
 	#endif
 
 	//F2 messages with 18 bytes or less don't seem to have
 	// any important information
 	if ( 19 > (int) cbuf[1]) {
 		#if DEBUG_STATUS
+		/*
 		Serial.println("F2: Unknown message - too short");
+		*/
 		#endif
 		//print unkonw messages as unknown type and list all bytes
-		print_unknown_json( cbuf );
 
 		//clear memory
 		memset(cbuf, 0, sizeof(cbuf));
@@ -300,6 +306,7 @@ void on_status(char cbuf[], int *idx) {
 
 	#if DEBUG_STATUS
 	//19, 20, 21, 22
+	/*
 	Serial.print("F2: 19 = ");
 	print_hex(cbuf[19], 8);
 	Serial.println();
@@ -315,6 +322,7 @@ void on_status(char cbuf[], int *idx) {
 	Serial.print("F2: 22 = ");
 	print_hex(cbuf[22], 8);
 	Serial.println();
+	*/
 	#endif
 
 
