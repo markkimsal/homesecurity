@@ -742,12 +742,12 @@ void on_lrr(char cbuf[], int *idx, SoftwareSerial &vista) {
 		lcbuf[4] = (char) 0x00;
 		lcbuflen = 5;
 		expect_response((char)((cbuf[1] + 0x40) & 0xFF));
+		/*
 		Serial.println("");
 		Serial.print("expecting ");
-
 		print_hex((char)((cbuf[1] + 0x40) & 0xFF),8);
 		Serial.println("");
-		//Serial.println("expecting " + (char)((cbuf[1] + 0x40) & 0xFF));
+		*/
 	}
 
 	int chksum = 0;
