@@ -25,6 +25,10 @@ int msg_len_ack = 2;
 
 volatile int  seq_poll = 0;
 
+char expect_byt           = NULL;
+void (*expect_callback_error)(void *data) = NULL;
+void (*expect_callback_complete)(void *data) = NULL;
+
 char combuf[30];
 int  combufidx = 0;
 bool reading_command = false;
@@ -98,6 +102,48 @@ void blink_dhcp() {
 	}
 }
 
+void expect_response(char byt) {
+
+	expect_byt = byt;
+}
+
+void clear_expect() {
+	expect_byt               = NULL;
+	expect_callback_error    = NULL;
+	expect_callback_complete = NULL;
+}
+
+void on_response_error( void (*func)(void *data) ) {
+	expect_callback_error = func;
+}
+
+void on_response_complete( void (*func)(void *data) ) {
+	expect_callback_complete = func;
+}
+
+
+/**
+ * return false if no error callback was specified
+ * true otherwise
+ */
+bool _on_response_error(void *data) {
+	if (expect_callback_error == NULL) {
+		return false;
+	}
+	expect_callback_error(data);
+	return true;
+}
+/**
+ * return false if no complete callback was specified
+ * true otherwise
+ */
+bool _on_response_complete(void *data) {
+	if (expect_callback_complete == NULL) {
+		return false;
+	}
+	expect_callback_complete(data);
+	return true;
+}
 
 /**
  * F2,0B,60,6D,0D,45,44,A0,
@@ -672,7 +718,7 @@ void on_lrr(char cbuf[], int *idx, SoftwareSerial &vista) {
 	print_unknown_json( cbuf , *idx );
 	char type = cbuf[3];
 
-	tunedDelay(10);
+//	tunedDelay(10);
 	//0x52 means respond with only cycle message
 	//0x48 means same thing
 	//, i think 0x42 and and 0x58 are the same
@@ -695,6 +741,13 @@ void on_lrr(char cbuf[], int *idx, SoftwareSerial &vista) {
 		lcbuf[3] = (char) 0x00;
 		lcbuf[4] = (char) 0x00;
 		lcbuflen = 5;
+		expect_response((char)((cbuf[1] + 0x40) & 0xFF));
+		Serial.println("");
+		Serial.print("expecting ");
+
+		print_hex((char)((cbuf[1] + 0x40) & 0xFF),8);
+		Serial.println("");
+		//Serial.println("expecting " + (char)((cbuf[1] + 0x40) & 0xFF));
 	}
 
 	int chksum = 0;
@@ -961,9 +1014,24 @@ void switch_first_byte(int x, SoftwareSerial vista) {
 		return;
 	}
 
-	Serial.print("Unknown char: ");
-	print_hex((char)x, 8);
-	Serial.println();
+	if (expect_byt == NULL) {
+		Serial.print("Unknown char: ");
+		print_hex((char)x, 8);
+		Serial.println();
+	}
+
+	if (expect_byt != NULL && x != expect_byt) {
+		if(!_on_response_error(&x)) {
+			Serial.print("{\"type\":\"error\",\"msg\":\"Unexpected byte with no error handler set. ");
+			print_hex(x, 8);
+			Serial.println("\"}");
+		}
+		clear_expect();
+	}
+	if (expect_byt != NULL && x == expect_byt) {
+		_on_response_complete(&x);
+		clear_expect();
+	}
 }
 
 
