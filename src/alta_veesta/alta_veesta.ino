@@ -56,7 +56,6 @@ bool   mid_ack = false;
 #include "out_wire.h"
 
 
-#include "SoftwareSerial2.h"
 SoftwareSerial vista(RX_PIN, TX_PIN, true);
 
 int ledPin =  13;    // LED connected to digital pin 13
@@ -391,8 +390,8 @@ void on_status(char cbuf[], int *idx) {
 		//Serial.println ("F2: no alarm");
 	}
 
-	memset(cbuf, 0, sizeof(cbuf));
-	*idx = 0;
+//	memset(cbuf, 0, sizeof(cbuf));
+//	*idx = 0;
 }
 
 void on_display(char cbuf[], int *idx) {
@@ -803,6 +802,15 @@ void loop()
 		//Serial.println(".");
 		return;
 	}
+	switch_first_byte(x, vista);
+
+	//clear buffer
+	memset(gcbuf, 0, sizeof(gcbuf));
+	gidx = 0;
+
+}
+
+void switch_first_byte(int x, SoftwareSerial vista) {
 
 	//start of new message
 	if ((int)x == 0xFFFFFFF7) {
@@ -866,10 +874,9 @@ void loop()
 		return;
 	}
 
-
-Serial.print("Unknown char: ");
-print_hex((char)x, 8);
-Serial.println();
+	Serial.print("Unknown char: ");
+	print_hex((char)x, 8);
+	Serial.println();
 }
 
 
