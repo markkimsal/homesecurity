@@ -151,16 +151,21 @@ void debug_cbuf(char cbuf[], int *idx, bool clear)
 }
 
 
-void print_unknown_json(char cbuf[]) {
+void print_unknown_json(char cbuf[], int len=-1) {
 
-	Serial.print("{\"type\":\"unkown\",\"bytes\":[");
-	int len = (int) cbuf[1];
+	Serial.print("{\"type\":\"debug\",\"bytes\":[");
+	//read from packet second position
+	//add in the first byte and the len byte (+2)
+	if (len == -1) {
+		len = (int) cbuf[1]+2;
+	}
 
-	for (int x = 0; x < 19 ; x++) {
-		if (x > 1) 
+	//length is for the bytes after the 2 byte header
+	for (int x = 0; x < len ; x++) {
+		if (x > 0)
 		Serial.print(",");
 		Serial.print("\"");
-		print_hex( cbuf[x], 8);
+		print_hex( cbuf[x], 8 );
 		Serial.print("\"");
 	}
 	Serial.println("]}");
