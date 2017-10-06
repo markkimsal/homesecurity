@@ -786,9 +786,9 @@ void on_ack(char cbuf[], int *idx, SoftwareSerial &vista) {
 		tunedDelay(600);
 		write_chars( vista );
 		//clear memroy
-		out_wire_init();
-		memset(cbuf, 0, sizeof(cbuf));
-		*idx = 0;
+//		out_wire_init();
+//		memset(cbuf, 0, sizeof(cbuf));
+//		*idx = 0;
 	}
 }
 

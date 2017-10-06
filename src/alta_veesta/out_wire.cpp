@@ -4,6 +4,8 @@
 #include "SoftwareSerial2.h"
 
 #include "util.h"
+#include "alta_veesta.h"
+#include "out_wire.h"
 
 /* static */ 
 inline void tunedDelay(uint16_t delay) { 
@@ -116,6 +118,8 @@ void write_chars(
 
 	//vistaSerial.write((int) (0x100-(header+checksum+ outbufIdx+1)) );
 	vistaSerial.write(chksum);
+	expect_response(header);
+	on_response_complete( &key_ack_complete );
 
 	#if DEBUG_KEYS
 	Serial.print("Packet Header: ");
@@ -133,6 +137,17 @@ void write_chars(
 	Serial.println();
 	#endif
 
+}
+
+void key_ack_complete(void *data) {
+
+	//let's pretend we didn't get any new key presses
+	//between the send and the expected response byte
+	out_wire_init();
+	//TODO: only erase bytes that were sent from outbuf
+	//make a shadow copy of outbufIdx when callback is set
+	//subtract copy from outbufIdx
+	//move remaining indexes back to beginning
 }
 
 void debug_out_buf()

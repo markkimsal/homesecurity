@@ -26,5 +26,6 @@ void debug_out_buf();
 
 bool have_message();
 
+void key_ack_complete( void *data );
 void out_wire_init();
 #endif
