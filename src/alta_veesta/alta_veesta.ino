@@ -1069,9 +1069,9 @@ void switch_first_byte(int x, SoftwareSerial vista) {
 	}
 
 	if (expect_byt == NULL) {
-		Serial.print("Unknown char: ");
+		Serial.print("{\"type\":\"unknown\",\"byte\":\"");
 		print_hex((char)x, 8);
-		Serial.println();
+		Serial.println("\"}");
 	}
 
 	if (expect_byt != NULL && x != expect_byt) {
