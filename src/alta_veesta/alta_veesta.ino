@@ -721,6 +721,9 @@ void ack_f7() {
  * in Ademco Contact ID format
  * the lower 4 bits of 8 and both bites of 9
  * ["F9","43","0B","58","80","FF","FF","18","14","06","01","00","20","90"]}
+ *
+ * It seems that, for trouble indicators (0x300 range) the qualifier is flipped
+ * where 1 means "new" and 3 means "restored"
  */
 void on_lrr(char cbuf[], int *idx, SoftwareSerial &vista) {
 
@@ -783,6 +786,9 @@ void on_lrr(char cbuf[], int *idx, SoftwareSerial &vista) {
 	for (int x=0; x<lcbuflen; x++) {
 		vista.write(lcbuf[x]);
 	}
+	#if DEBUG_LRR
+	print_unknown_json( lcbuf , lcbuflen );
+	#endif
 
 	//send events in json
 	//we must ack first before sending
@@ -791,10 +797,20 @@ void on_lrr(char cbuf[], int *idx, SoftwareSerial &vista) {
 		Serial.print("{\"type\":\"event\",\"code\":\"");
 		print_hex(tr.code, 16);
 		Serial.print("\",\"qualifier\":\"");
-		if (tr.qual == 3) {
-			Serial.print("new");
+		//flip qualifier for trouble codes
+		if ( (tr.code & 0x0300) == 0x0300) {
+			if (tr.qual == 1) {
+				Serial.print("new");
+			} else {
+				Serial.print("restore");
+			}
+
 		} else {
-			Serial.print("restore");
+			if (tr.qual == 3) {
+				Serial.print("new");
+			} else {
+				Serial.print("restore");
+			}
 		}
 		Serial.print("\",\"user_zone\":");
 		Serial.print("\"");
