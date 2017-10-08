@@ -724,10 +724,6 @@ void ack_f7() {
  */
 void on_lrr(char cbuf[], int *idx, SoftwareSerial &vista) {
 
-	//TODO: check chksum
-	char lcbuf[12];
-	int  lcbuflen = 0;
-
 	int len = cbuf[2];
 
 	#if DEBUG_LRR
@@ -737,6 +733,9 @@ void on_lrr(char cbuf[], int *idx, SoftwareSerial &vista) {
 	if (len == 0 ) { return; }
 	char type = cbuf[3];
 
+	//TODO: check chksum
+	char lcbuf[12];
+	int  lcbuflen = 0;
 
 	Trouble tr;
 	tr.code = 0;
@@ -792,8 +791,12 @@ void on_lrr(char cbuf[], int *idx, SoftwareSerial &vista) {
 		Serial.print("{\"type\":\"event\",\"code\":\"");
 		print_hex(tr.code, 16);
 		Serial.print("\",\"qualifier\":\"");
-		Serial.print(tr.qual);
-		Serial.print("\",\"user\":");
+		if (tr.qual == 3) {
+			Serial.print("new");
+		} else {
+			Serial.print("restore");
+		}
+		Serial.print("\",\"user_zone\":");
 		Serial.print("\"");
 		Serial.print(tr.user);
 		Serial.println("\"}");
