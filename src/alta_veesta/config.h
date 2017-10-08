@@ -8,6 +8,7 @@ const char VERSION[6] = "0.9.9";
 #define DEBUG_STATUS  1
 //#define DEBUG_KEYS    0
 //#define DEBUG_DISPLAY 0
+//#define DEBUG_LRR 0
 
 
 #define RX_PIN 12

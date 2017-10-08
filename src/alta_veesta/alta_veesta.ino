@@ -729,14 +729,17 @@ void on_lrr(char cbuf[], int *idx, SoftwareSerial &vista) {
 	int  lcbuflen = 0;
 
 	int len = cbuf[2];
-	if (len == 0 ) { return; }
 
+	#if DEBUG_LRR
 	print_unknown_json( cbuf , *idx );
+	#endif
+
+	if (len == 0 ) { return; }
 	char type = cbuf[3];
+
 
 	Trouble tr;
 	tr.code = 0;
-//	tunedDelay(10);
 	//0x52 means respond with only cycle message
 	//0x48 means same thing
 	//, i think 0x42 and and 0x58 are the same
@@ -766,12 +769,6 @@ void on_lrr(char cbuf[], int *idx, SoftwareSerial &vista) {
 		lcbuf[4] = (char) 0x00;
 		lcbuflen = 5;
 		expect_response((char)((cbuf[1] + 0x40) & 0xFF));
-		/*
-		Serial.println("");
-		Serial.print("expecting ");
-		print_hex((char)((cbuf[1] + 0x40) & 0xFF),8);
-		Serial.println("");
-		*/
 	}
 
 	int chksum = 0;
