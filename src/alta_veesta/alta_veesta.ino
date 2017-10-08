@@ -729,11 +729,12 @@ void on_lrr(char cbuf[], int *idx, SoftwareSerial &vista) {
 
 	int len = cbuf[2];
 
-	#if DEBUG_LRR
-	print_unknown_json( cbuf , *idx );
-	#endif
-
-	if (len == 0 ) { return; }
+	if (len == 0 ) {
+		#if DEBUG_LRR
+		print_unknown_json( cbuf , *idx );
+		#endif
+		return;
+	}
 	char type = cbuf[3];
 
 	//TODO: check chksum
@@ -768,25 +769,37 @@ void on_lrr(char cbuf[], int *idx, SoftwareSerial &vista) {
 		lcbuf[1] = (char) 0x04;
 		lcbuf[2] = (char) 0x00;
 		lcbuf[3] = (char) 0x00;
+		//0x08 is sent if we're in test mode
+		//0x0a after a test
+		//0x04 if you have network problems?
+		//0x06 if you have network problems?
 		lcbuf[4] = (char) 0x00;
 		lcbuflen = 5;
 		expect_response((char)((cbuf[1] + 0x40) & 0xFF));
 	}
 
-	int chksum = 0;
-	for (int x=0; x<lcbuflen; x++) {
-		chksum += lcbuf[x];
+	//we don't need a checksum for 1 byte messages (no length bit)
+	//if we don't even have a message length byte, then we are just
+	// ACKing a cycle header byte.
+	if (lcbuflen >= 2) {
+		int chksum = 0;
+		for (int x=0; x<lcbuflen; x++) {
+			chksum += lcbuf[x];
+		}
+		chksum -= 1;
+		chksum = chksum ^ 0xFF;
+		lcbuf[lcbuflen] = chksum;
+		lcbuflen++;
 	}
-	chksum -= 1;
-	chksum = chksum ^ 0xFF;
-	lcbuf[lcbuflen] = chksum;
-	lcbuflen++;
 
 	//print_unknown_json( lcbuf , lcbuflen);
 	for (int x=0; x<lcbuflen; x++) {
 		vista.write(lcbuf[x]);
 	}
+
+
 	#if DEBUG_LRR
+	print_unknown_json( cbuf , *idx );
 	print_unknown_json( lcbuf , lcbuflen );
 	#endif
 
