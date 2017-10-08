@@ -57,8 +57,16 @@ volatile unsigned long low_time = 0;
 bool   mid_msg = false;
 bool   mid_ack = false;
 
-#include "out_wire.h"
+struct trouble {
+	int code;
+	short qual;
+	short zone;
+	short user;
+};
 
+typedef struct trouble Trouble;
+
+#include "out_wire.h"
 
 SoftwareSerial vista(RX_PIN, TX_PIN, true);
 
@@ -707,8 +715,16 @@ void ack_f7() {
 	return;
 }
 
+/**
+ * Typical packet
+ * positions 8 and 9 hold the report code
+ * in Ademco Contact ID format
+ * the lower 4 bits of 8 and both bites of 9
+ * ["F9","43","0B","58","80","FF","FF","18","14","06","01","00","20","90"]}
+ */
 void on_lrr(char cbuf[], int *idx, SoftwareSerial &vista) {
 
+	//TODO: check chksum
 	char lcbuf[12];
 	int  lcbuflen = 0;
 
@@ -718,6 +734,8 @@ void on_lrr(char cbuf[], int *idx, SoftwareSerial &vista) {
 	print_unknown_json( cbuf , *idx );
 	char type = cbuf[3];
 
+	Trouble tr;
+	tr.code = 0;
 //	tunedDelay(10);
 	//0x52 means respond with only cycle message
 	//0x48 means same thing
@@ -730,6 +748,12 @@ void on_lrr(char cbuf[], int *idx, SoftwareSerial &vista) {
 		lcbuflen++;
 	} else if (type == (char) 0x58) {
 		//just respond, but 0x58s have lots of info
+
+		tr.qual    = (0xf0 & cbuf[8]) >> 4;
+		tr.code    = (0x0f & cbuf[8]) << 8;
+		tr.code   |= cbuf[9];
+		tr.zone   = cbuf[12] >> 4;
+		tr.user   = cbuf[12] >> 4;
 
 		lcbuf[0] = (char)(cbuf[1]);
 		lcbuflen++;
@@ -762,6 +786,20 @@ void on_lrr(char cbuf[], int *idx, SoftwareSerial &vista) {
 	//print_unknown_json( lcbuf , lcbuflen);
 	for (int x=0; x<lcbuflen; x++) {
 		vista.write(lcbuf[x]);
+	}
+
+	//send events in json
+	//we must ack first before sending
+	//this much serial data
+	if (tr.code != 0) {
+		Serial.print("{\"type\":\"event\",\"code\":\"");
+		print_hex(tr.code, 16);
+		Serial.print("\",\"qualifier\":\"");
+		Serial.print(tr.qual);
+		Serial.print("\",\"user\":");
+		Serial.print("\"");
+		Serial.print(tr.user);
+		Serial.println("\"}");
 	}
 }
 
