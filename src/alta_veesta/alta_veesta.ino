@@ -724,6 +724,7 @@ void ack_f7() {
  *
  * It seems that, for trouble indicators (0x300 range) the qualifier is flipped
  * where 1 means "new" and 3 means "restored"
+ * 0x48 is a startup sequence, the byte after 0x48 will be 00 01 02 03
  */
 void on_lrr(char cbuf[], int *idx, SoftwareSerial &vista) {
 
@@ -741,6 +742,10 @@ void on_lrr(char cbuf[], int *idx, SoftwareSerial &vista) {
 	char lcbuf[12];
 	int  lcbuflen = 0;
 
+	//if we try to transmit too quickly, the rising edge of the
+	//yellow line causes a read and delays the sending of all
+	//response bytes
+	tunedDelay(400);
 	Trouble tr;
 	tr.code = 0;
 	//0x52 means respond with only cycle message
@@ -792,11 +797,12 @@ void on_lrr(char cbuf[], int *idx, SoftwareSerial &vista) {
 		lcbuflen++;
 	}
 
-	//print_unknown_json( lcbuf , lcbuflen);
 	for (int x=0; x<lcbuflen; x++) {
-		vista.write(lcbuf[x]);
+		if (!vista.write(lcbuf[x])) {
+		Serial.println("ERROR writing byte");
+		return;
+		}
 	}
-
 
 	#if DEBUG_LRR
 	print_unknown_json( cbuf , *idx );
@@ -998,6 +1004,20 @@ void loop()
 
 void switch_first_byte(int x, SoftwareSerial vista) {
 
+	if (expect_byt != NULL && x != expect_byt) {
+		if(!_on_response_error(&x)) {
+			Serial.print("{\"type\":\"error\",\"msg\":\"Unexpected byte with no error handler set. ");
+			print_hex(x, 8);
+			Serial.println("\"}");
+		}
+		clear_expect();
+	}
+	if (expect_byt != NULL && x == expect_byt) {
+		_on_response_complete(&x);
+		clear_expect();
+		return;
+	}
+
 	//start of new message
 	if ((int)x == 0xFFFFFFF7) {
 		guibuf[ guidx ] = x;
@@ -1087,6 +1107,8 @@ void switch_first_byte(int x, SoftwareSerial vista) {
 		Serial.println("\"}");
 	}
 
+	//moved to top
+/*
 	if (expect_byt != NULL && x != expect_byt) {
 		if(!_on_response_error(&x)) {
 			Serial.print("{\"type\":\"error\",\"msg\":\"Unexpected byte with no error handler set. ");
@@ -1099,6 +1121,7 @@ void switch_first_byte(int x, SoftwareSerial vista) {
 		_on_response_complete(&x);
 		clear_expect();
 	}
+	*/
 }
 
 
