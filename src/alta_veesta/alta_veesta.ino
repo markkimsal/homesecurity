@@ -44,7 +44,7 @@ char guibuf[100];
 int  guidx = 0;
 
 // Used to read bits on F7 message
-int const BIT_MASK_BYTE1_BEEP = 0x03;
+int const BIT_MASK_BYTE1_BEEP = 0x07;
 
 int const BIT_MASK_BYTE2_ARMED_HOME = 0x80;
 int const BIT_MASK_BYTE2_READY = 0x10;
