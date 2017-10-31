@@ -496,6 +496,7 @@ void on_display(char cbuf[], int *idx) {
     Serial.print("{\"type\":\"display\"");
     for (int x = 0; x <= 10 ; x++) {
         switch ( x ) {
+		/*
             case 1:
                 Serial.print(",");
                 Serial.print(" \"addr1\": \"");
@@ -508,6 +509,7 @@ void on_display(char cbuf[], int *idx) {
                 print_hex( cbuf[x], 8);
                 Serial.print("\"");
                 break;
+				*/
             case 3:
 				if (cbuf[x] & 0x02) {
                     Serial.print(", \"kp17\": \"active\"");
@@ -533,6 +535,7 @@ void on_display(char cbuf[], int *idx) {
 //                print_hex( cbuf[x], 8);
 //                Serial.print("\",");
                 break;
+				/*
             case 4:
                 Serial.print(",");
                 Serial.print(" \"addr4\": \"");
@@ -545,6 +548,7 @@ void on_display(char cbuf[], int *idx) {
                 print_hex( cbuf[x], 8);
                 Serial.print("\"");
                 break;
+				*/
             case 6:
                 if ( (cbuf[x] & BIT_MASK_BYTE1_BEEP ) > 0 ) {
                     Serial.print(",");
