@@ -51,7 +51,9 @@ int const BIT_MASK_BYTE2_LOW_BAT    = 0x40;
 int const BIT_MASK_BYTE2_READY      = 0x10;
 
 int const BIT_MASK_BYTE3_CHIME_MODE = 0x20;
-int const BIT_MASK_BYTE3_AC_POWER = 0x08;
+int const BIT_MASK_BYTE3_BYPASS     = 0x10;
+
+int const BIT_MASK_BYTE3_AC_POWER   = 0x08;
 int const BIT_MASK_BYTE3_ARMED_AWAY = 0x04;
 
 volatile unsigned long low_time = 0;
@@ -580,6 +582,10 @@ void on_display(char cbuf[], int *idx) {
                 } else {
                     Serial.print(", \"chime\": \"off\"");
                 }
+                if ( (cbuf[x] & BIT_MASK_BYTE3_BYPASS ) ) {
+                    Serial.print(", \"bypass_zone\": true");
+                }
+
                 if ( (cbuf[x] & BIT_MASK_BYTE3_AC_POWER ) ) {
                     Serial.print(", \"ac_power\": \"on\"");
                 } else {
