@@ -47,7 +47,8 @@ int  guidx = 0;
 int const BIT_MASK_BYTE1_BEEP = 0x07;
 
 int const BIT_MASK_BYTE2_ARMED_HOME = 0x80;
-int const BIT_MASK_BYTE2_READY = 0x10;
+int const BIT_MASK_BYTE2_LOW_BAT    = 0x40;
+int const BIT_MASK_BYTE2_READY      = 0x10;
 
 int const BIT_MASK_BYTE3_CHIME_MODE = 0x20;
 int const BIT_MASK_BYTE3_AC_POWER = 0x08;
@@ -558,6 +559,10 @@ void on_display(char cbuf[], int *idx) {
                 } else {
                     Serial.print(", \"ARMED_STAY\": \"false\"");
                 }
+                if ( (cbuf[x] & BIT_MASK_BYTE2_LOW_BAT ) ) {
+                    Serial.print(", \"low_batt\": \"true\"");
+                }
+
                 if ( (cbuf[x] & BIT_MASK_BYTE2_READY )) {
                     Serial.print(", \"READY\": \"true\"");
                 } else {
