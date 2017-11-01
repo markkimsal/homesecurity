@@ -33,15 +33,12 @@ char combuf[30];
 int  combufidx = 0;
 bool reading_command = false;
 
-char gcbuf[30];
+char gcbuf[100];
 int  gidx = 0;
 int  lastgidx = 0;
 
 
 char alarm_buf[3][30];
-
-char guibuf[100];
-int  guidx = 0;
 
 // Used to read bits on F7 message
 int const BIT_MASK_BYTE1_BEEP = 0x07;
@@ -462,37 +459,19 @@ void on_status(char cbuf[], int *idx) {
 		//Serial.println ("F2: no alarm");
 	}
 
-//	memset(cbuf, 0, sizeof(cbuf));
-//	*idx = 0;
+	memset(cbuf, 0, sizeof(cbuf));
+	*idx = 0;
 }
 
 void on_display(char cbuf[], int *idx) {
     // first 4 bytes are addresses of intended keypads to display this message
     // from left to right MSB to LSB
-    // 5th byte represent zone
+    // 5th byte represents  ??? (not the zone)
     // 6th binary encoded data including beeps
     // 7th binary encoded data including status armed mode
     // 8th binary encoded data including ac power and chime
     // 9th byte Programming mode = 0x01
     // 10th byte promt position in the display message of the expected input
-	#ifdef DEBUG_DISPLAY
-    Serial.print("F7: {");
-    for (int x = 1; x <= 11 ; x++) {
-         print_hex( cbuf[x], 8);
-         Serial.print(",");
-	}
-
-	Serial.print (" chksm: ");
-	print_hex( cbuf[*idx-1], 8 );
-	Serial.println ("}");
-
-	//12-end is the body
-	Serial.print("F7: ");
-	for (int x = 12; x < *idx -1; x++) {
-		Serial.print ( cbuf[x] );
-	}
-	Serial.println();
-	#endif
 
     // print out message as JSON
     Serial.print("{\"type\":\"display\"");
@@ -645,11 +624,9 @@ void on_display(char cbuf[], int *idx) {
 		
 	//DEBUG
 	#ifdef DEBUG_DISPLAY
-	debug_cbuf(cbuf, idx, false);
+	print_unknown_json( cbuf , *idx );
 	#endif
 
-	memset(cbuf, 0, sizeof(cbuf));
-	*idx = 0;
 }
 
 void on_poll() {
@@ -1035,16 +1012,17 @@ void switch_first_byte(int x, SoftwareSerial vista) {
 
 	//start of new message
 	if ((int)x == 0xFFFFFFF7) {
-		guibuf[ guidx ] = x;
-		guidx++;
 
-		read_chars( msg_len_status -1, guibuf, &guidx, 45);
+		//store first byte in global char buf
+		gcbuf[ gidx ] = x;
+		gidx++;
+
+		read_chars( msg_len_status -1, gcbuf, &gidx, 45);
 		ack_f7();
 		//eat up the remaining 4 pulsing 0x00
-		read_chars( msg_len_status -1, guibuf, &guidx, 4);
+		//read_chars( 4, gcbuf, &gidx, 4);
 
-
-		on_display(guibuf, &guidx);
+		on_display(gcbuf, &gidx);
 		return;
 	}
 
