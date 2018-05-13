@@ -355,9 +355,9 @@ void on_status(char cbuf[], int *idx) {
 	//4 is a alarm
 	//6 is a fault that does not cause an alarm
 	//8 is for panic alarm.
-	short exit_delay = (cbuf[22] & 0x02);
-	short fault      = (cbuf[22] & 0x04);
-	short panic      = (cbuf[22] & 0x08);
+	short ignore_faults = (cbuf[22] & 0x02);
+	short fault         = (cbuf[22] & 0x04);
+	short panic         = (cbuf[22] & 0x08);
 
 	//print as JSON
 	Serial.print("{\"type\":\"status\"");
@@ -375,7 +375,7 @@ void on_status(char cbuf[], int *idx) {
 		Serial.print("\"stay\"");
 	}
 	Serial.print(", \"ignore_faults\": ");
-	if (exit_delay) {
+	if (ignore_faults) {
 		Serial.print(F("\"yes\""));
 	} else {
 		Serial.print(F("\"no\""));
@@ -396,12 +396,12 @@ void on_status(char cbuf[], int *idx) {
 	
 	Serial.println("}");
 
-	if ( armed && fault && !exit_delay ) {
+	if ( armed && fault && !ignore_faults ) {
 		on_alarm();
 		Serial.println ("{\"type\": \"alarm\"}");
 		//save gcbuf for debugging
 		strncpy(alarm_buf[0],  cbuf, 30);
-	} else if ( !armed  && fault  && away && !exit_delay) {
+	} else if ( !armed  && fault  && away && !ignore_faults) {
 		//away bit always flips to 0x02 when alarm is canceled
 		Serial.println ("{\"type\": \"cancel\"}");
 	} else {
