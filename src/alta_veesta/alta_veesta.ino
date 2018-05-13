@@ -312,7 +312,7 @@ no alarm
 void on_status(char cbuf[], int *idx) {
 
 
-	#if DEBUG_STATUS
+	#ifdef DEBUG_STATUS
 	/*
 	Serial.print("F2: {");
 
@@ -338,14 +338,14 @@ void on_status(char cbuf[], int *idx) {
 	*/
 	#endif
 
-	#if DEBUG_STATUS
+	#ifdef DEBUG_STATUS
 	print_unknown_json( cbuf );
 	#endif
 
 	//F2 messages with 18 bytes or less don't seem to have
 	// any important information
 	if ( 19 > (int) cbuf[1]) {
-		#if DEBUG_STATUS
+		#ifdef DEBUG_STATUS
 		/*
 		Serial.println("F2: Unknown message - too short");
 		*/
@@ -723,7 +723,7 @@ void on_lrr(char cbuf[], int *idx, SoftwareSerial &vista) {
 	int len = cbuf[2];
 
 	if (len == 0 ) {
-		#if DEBUG_LRR
+		#ifdef DEBUG_LRR
 		print_unknown_json( cbuf , *idx );
 		#endif
 		return;
@@ -796,7 +796,7 @@ void on_lrr(char cbuf[], int *idx, SoftwareSerial &vista) {
 		}
 	}
 
-	#if DEBUG_LRR
+	#ifdef DEBUG_LRR
 	print_unknown_json( cbuf , *idx );
 	print_unknown_json( lcbuf , lcbuflen );
 	#endif
@@ -836,7 +836,7 @@ void on_ack(char cbuf[], int *idx, SoftwareSerial &vista) {
 	int kpadr = (int)cbuf[1];
 
 	uint8_t KPADDR = fetch_kpaddr();
-	#if DEBUG_KEYS
+	#ifdef DEBUG_KEYS
 	Serial.print("F6: kp ack addr = ");
 	Serial.println(kpadr, DEC);
 	Serial.print("F6: bitmask is ");
