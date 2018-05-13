@@ -19,17 +19,17 @@ const char VERSION[6] = "0.9.9";
 //#define USE_DHCP     1
 //#define STATIC_IP  {192, 168, 2, 104}
 
-#define MAC_ADDR { 0xB8, 0x70, 0xF4, 0x1E, 0xC5, 0x7E };
+//#define MAC_ADDR { 0xB8, 0x70, 0xF4, 0x1E, 0xC5, 0x7E };
 
 // HTTP method is required for self-registering
-#define USE_HTTP 1
+//#define USE_HTTP 1
 //#define USE_SMTP 1
 //#define USE_ZMQ  1
 
 
 // Use LCD Screen
-#define HAVE_OLED 1
-#define OLED_SSD1306 1
+//#define HAVE_OLED 1
+//#define OLED_SSD1306 1
 
 //========================================
 // Requires a custom web server
