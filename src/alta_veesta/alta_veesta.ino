@@ -357,22 +357,16 @@ void on_status(char cbuf[], int *idx) {
 	//8 is for panic alarm.
 	short exit_delay = (cbuf[22] & 0x02);
 	short fault      = (cbuf[22] & 0x04);
-	short panic     = (cbuf[22] & 0x08);
+	short panic      = (cbuf[22] & 0x08);
 
 	//print as JSON
 	Serial.print("{\"type\":\"status\"");
 
 	Serial.print(",\"armed\": ");
 	if (armed) {
-		Serial.print("\"yes\"");
+		Serial.print(F("\"yes\""));
 	} else {
-		Serial.print("\"no\"");
-	}
-	Serial.print(", \"exit_delay\": ");
-	if (exit_delay) {
-		Serial.print("\"yes\"");
-	} else {
-		Serial.print("\"no\"");
+		Serial.print(F("\"no\""));
 	}
 	Serial.print(", \"mode\": ");
 	if (away) {
@@ -382,21 +376,21 @@ void on_status(char cbuf[], int *idx) {
 	}
 	Serial.print(", \"ignore_faults\": ");
 	if (exit_delay) {
-		Serial.print("\"yes\"");
+		Serial.print(F("\"yes\""));
 	} else {
-		Serial.print("\"no\"");
+		Serial.print(F("\"no\""));
 	}
 	Serial.print(", \"faulted\": ");
 	if (fault) {
-		Serial.print("\"yes\"");
+		Serial.print(F("\"yes\""));
 	} else {
-		Serial.print("\"no\"");
+		Serial.print(F("\"no\""));
 	}
 	Serial.print(", \"panic\": ");
 	if (panic) {
-		Serial.print("\"yes\"");
+		Serial.print(F("\"yes\""));
 	} else {
-		Serial.print("\"no\"");
+		Serial.print(F("\"no\""));
 	}
 
 	
@@ -512,23 +506,23 @@ void on_display(char cbuf[], int *idx) {
                 break;
             case 8:
                 if ( (cbuf[x] & BIT_MASK_BYTE3_CHIME_MODE ) ) {
-                    Serial.print(", \"chime\": \"on\"");
+                    Serial.print(F(", \"chime\": \"on\""));
                 } else {
-                    Serial.print(", \"chime\": \"off\"");
+                    Serial.print(F(", \"chime\": \"off\""));
                 }
                 if ( (cbuf[x] & BIT_MASK_BYTE3_BYPASS ) ) {
-                    Serial.print(", \"bypass_zone\": true");
+                    Serial.print(F(", \"bypass_zone\": true"));
                 }
 
                 if ( (cbuf[x] & BIT_MASK_BYTE3_AC_POWER ) ) {
-                    Serial.print(", \"ac_power\": \"on\"");
+                    Serial.print(F(", \"ac_power\": \"on\""));
                 } else {
-                    Serial.print(", \"ac_power\": \"off\"");
+                    Serial.print(F(", \"ac_power\": \"off\""));
                 }
                 if ( (cbuf[x] & BIT_MASK_BYTE3_ARMED_AWAY ) > 0 ) {
-                    Serial.print(", \"ARMED_AWAY\": \"true\"");
+                    Serial.print(F(", \"ARMED_AWAY\": \"true\""));
                 } else {
-                    Serial.print(", \"ARMED_AWAY\": \"false\"");
+                    Serial.print(F(", \"ARMED_AWAY\": \"false\""));
                 }
 //                print_hex( cbuf[x], 8);
                 break;
@@ -818,15 +812,23 @@ void on_ack(char cbuf[], int *idx, SoftwareSerial &vista) {
  */
 void execute_command() {
 	String command = String(combuf);
-	if (command.substring(0,3) != "TT+") {
+	char prefix[3] = {};
+	memcpy(prefix, combuf, 3);
+
+	if (!strcmp(prefix, "TT+")) {
+		Serial.print(F("\n doesn't start with TT+: "));
+		Serial.println(prefix);
 		return;
 	}
+
 	String subcommand = command.substring(3, command.indexOf('='));
 	String value = command.substring(command.indexOf('=')+1);
 	if (subcommand == "KPADDR") {
 		if (!store_kpaddr( value.toInt() )) {
-		Serial.print("Error: failed to set kpaddr: ");
-		Serial.println(value.toInt());
+			Serial.println(F("{\"type\": \"error\", \"msg\": \"failed to set kpaddr\"}"));
+			//Serial.println(value.toInt());
+		} else {
+			Serial.println(F("{\"changed KPADDR\"}"));
 		}
 	}
 	if (subcommand == "SYSINFO") {
@@ -834,13 +836,11 @@ void execute_command() {
 	}
 
 	#ifdef DEBUG
-	Serial.print("\nGot command: ");
+	Serial.print(F("\nGot command: "));
 	Serial.print(subcommand);
-	Serial.print(" = ");
-	Serial.print(value);
-	Serial.print("\n");
+	Serial.print(F(" = "));
+	Serial.println(value);
 	#endif
-
 }
 
 void readConsole() {
@@ -1098,7 +1098,8 @@ void setup()   {
 	digitalWrite(A3, HIGH);
 	//initialize USB serial
 	Serial.begin(115200);
-	Serial.println("\"good morning\"");
+	Serial.println(F("good morning"));
+	memset(combuf, 0, sizeof(combuf));
 
 	#ifdef HAVE_OLED
 	oled_test();
