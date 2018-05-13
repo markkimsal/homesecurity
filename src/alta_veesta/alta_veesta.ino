@@ -633,7 +633,7 @@ void on_poll() {
 
 	if ( !have_message() ) return;
 
-	int KPADDR = fetch_kpaddr();
+	uint8_t KPADDR = fetch_kpaddr();
 
 	vista.setParity(false);
 	digitalWrite(ledPin, HIGH);
@@ -684,7 +684,7 @@ void ack_f7() {
     uint8_t oldSREG = SREG;
     cli();
 
-	int KPADDR = fetch_kpaddr();
+	uint8_t KPADDR = fetch_kpaddr();
 
 	vista.setParity(false);
 
@@ -835,7 +835,7 @@ void on_ack(char cbuf[], int *idx, SoftwareSerial &vista) {
 
 	int kpadr = (int)cbuf[1];
 
-	int KPADDR = fetch_kpaddr();
+	uint8_t KPADDR = fetch_kpaddr();
 	#if DEBUG_KEYS
 	Serial.print("F6: kp ack addr = ");
 	Serial.println(kpadr, DEC);
@@ -1187,10 +1187,10 @@ void setup()   {
 //		api_call_register_self();
 	#endif
 	#endif
+	Serial.println(F("\"Starting vista keypad bus\"\n"));
 
-	Serial.println("\"Starting vista keypad bus\"");
 	Serial.print("\"Using kpaddr: ");
-	Serial.print(fetch_kpaddr());
+	Serial.print((uint8_t)fetch_kpaddr(), DEC);
 	Serial.println("\"");
 
 	vista.begin( vistaBaud );

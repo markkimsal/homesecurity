@@ -11,8 +11,11 @@
  * Use 16 if no address has been stored
  */
 uint8_t fetch_kpaddr() {
-	int kpaddr = EEPROM.read(KPADDR_EEPROM_OFFSET);
+	uint8_t kpaddr = EEPROM.read(KPADDR_EEPROM_OFFSET);
 	if (kpaddr == 0) {
+		return 16;
+	}
+	if (kpaddr > 23 || kpaddr < 16) {
 		return 16;
 	}
 	return kpaddr;
