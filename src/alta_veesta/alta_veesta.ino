@@ -19,7 +19,6 @@
 #include "oled.h"
 #endif
 
-
 int msg_len_status = 45;
 int msg_len_ack = 2;
 
@@ -255,28 +254,6 @@ void on_init() {
 }
 
 
-
-void on_command(char cbuf[], int *idx) {
-
-	#ifndef DEBUG
-
-	//first 5 bytes are headers
-	for (int x = 6; x < *idx -1; x++) {
-		Serial.print ( cbuf[x] );
-	}
-
-	Serial.println();
-	memset(cbuf, 0, sizeof(cbuf));
-	*idx = 0;
-
-	#else
-
-	//DEBUG
-	debug_cbuf(cbuf, idx, true);
-
-	#endif
-}
-
 /**
  * This is a panic button hold
  , ,f,f,c, ,E,C, ,1, ,E,l, , , , , , , ,
@@ -357,28 +334,6 @@ void on_status(char cbuf[], int *idx) {
 		*idx = 0;
 		return;
 	}
-
-	#if DEBUG_STATUS
-	//19, 20, 21, 22
-	/*
-	Serial.print("F2: 19 = ");
-	print_hex(cbuf[19], 8);
-	Serial.println();
-
-	Serial.print("F2: 20 = ");
-	print_hex(cbuf[20], 8);
-	Serial.println();
-
-	Serial.print("F2: 21 = ");
-	print_hex(cbuf[21], 8);
-	Serial.println();
-
-	Serial.print("F2: 22 = ");
-	print_hex(cbuf[22], 8);
-	Serial.println();
-	*/
-	#endif
-
 
 	//19th spot is 01 for disarmed, 02 for armed
 	//short armed = (0x02 & cbuf[19]) && !(cbuf[19] & 0x01);
