@@ -24,8 +24,8 @@ int msg_len_ack = 2;
 
 volatile int  seq_poll = 0;
 
-char expect_byt           = NULL;
-void (*expect_callback_error)(void *data) = NULL;
+char expect_byt                              = '\0';
+void (*expect_callback_error)(void *data)    = NULL;
 void (*expect_callback_complete)(void *data) = NULL;
 
 char combuf[30];
@@ -115,7 +115,7 @@ void expect_response(char byt) {
 }
 
 void clear_expect() {
-	expect_byt               = NULL;
+	expect_byt               = '\0';
 	expect_callback_error    = NULL;
 	expect_callback_complete = NULL;
 }
@@ -305,9 +305,6 @@ void on_status(char cbuf[], int *idx) {
 	//F2 messages with 18 bytes or less don't seem to have
 	// any important information
 	if ( 18 >= (uint8_t) cbuf[1]) {
-		//clear memory
-		memset(cbuf, 0, sizeof(cbuf));
-		*idx = 0;
 		return;
 	}
 
@@ -316,7 +313,7 @@ void on_status(char cbuf[], int *idx) {
 	uint8_t body_len   = (uint8_t)cbuf[1] - (uint8_t) cbuf[2] - 1;
 
 //	char status_hdr[ (uint8_t)cbuf[2] ];
-	char status_body[ (uint8_t)cbuf[1] - (uint8_t)cbuf[2] ];
+	char *status_body = new char[ body_len ];
 
 	for (uint8_t i= body_start+1; i <= (uint8_t)cbuf[1]+1; i++) {
 		status_body[ i - body_start -1 ] = cbuf[ i ];
@@ -338,7 +335,7 @@ void on_status(char cbuf[], int *idx) {
 
 	//21st spot is for bypass
 	//12th byte in status_body
-	short bypass = 0x02 & status_body[12];
+	//short bypass = 0x02 & status_body[12];
 
 	//22nd spot is for alarm types
 	//1 is no alarm
@@ -399,8 +396,7 @@ void on_status(char cbuf[], int *idx) {
 		//Serial.println ("F2: no alarm");
 	}
 
-	memset(cbuf, 0, sizeof(cbuf));
-	*idx = 0;
+	delete[] status_body;
 }
 
 void on_display(char cbuf[], int *idx) {
@@ -942,7 +938,7 @@ void loop()
 
 void switch_first_byte(int x, SoftwareSerial vista) {
 
-	if (expect_byt != NULL && x != expect_byt) {
+	if (expect_byt != '\0' && x != expect_byt) {
 		if(!_on_response_error(&x)) {
 			Serial.print("{\"type\":\"error\",\"msg\":\"Unexpected byte with no error handler set. ");
 			print_hex(x, 8);
@@ -950,14 +946,14 @@ void switch_first_byte(int x, SoftwareSerial vista) {
 		}
 		clear_expect();
 	}
-	if (expect_byt != NULL && x == expect_byt) {
+	if (expect_byt != '\0' && x == expect_byt) {
 		_on_response_complete(&x);
 		clear_expect();
 		return;
 	}
 
 	//start of new message
-	if ((int)x == 0xFFFFFFF7) {
+	if ((uint8_t)x == 0xF7) {
 
 		//store first byte in global char buf
 		gcbuf[ gidx ] = x;
@@ -973,7 +969,7 @@ void switch_first_byte(int x, SoftwareSerial vista) {
 	}
 
 	//key ack
-	if ((int)x == 0xFFFFFFF6) {
+	if ((uint8_t)x == 0xF6) {
 		//debug_cbuf(gcbuf, &gidx, true);
 		memset(gcbuf, 0, sizeof(gcbuf));
 		gidx = 0;
@@ -993,7 +989,7 @@ void switch_first_byte(int x, SoftwareSerial vista) {
 	}
 
 	//state change?
-	if ((int)x == 0xFFFFFFF2) {
+	if ((uint8_t)x == 0xF2) {
 		//debug_cbuf(gcbuf, &gidx, true);
 
 		gcbuf[ gidx ] = x;
@@ -1007,7 +1003,7 @@ void switch_first_byte(int x, SoftwareSerial vista) {
 	}
 
 	//Long Range Radio (LRR)
-	if ((int)x == 0xFFFFFFF9) {
+	if ((uint8_t)x == 0xF9) {
 		memset(gcbuf, 0, sizeof(gcbuf));
 		gidx = 0;
 
@@ -1028,7 +1024,7 @@ void switch_first_byte(int x, SoftwareSerial vista) {
 
 
 	//unknown 0xFF
-	if ((int)x == 0xFFFFFFFf) {
+	if ((uint8_t)x == 0xFf) {
 
 		gcbuf[ gidx ] = x;
 		gidx++;
@@ -1040,7 +1036,7 @@ void switch_first_byte(int x, SoftwareSerial vista) {
 		return;
 	}
 
-	if (expect_byt == NULL) {
+	if (expect_byt == '\0') {
 		Serial.print("{\"type\":\"unknown\",\"byte\":\"");
 		print_hex((char)x, 8);
 		Serial.println("\"}");
