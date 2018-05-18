@@ -156,7 +156,7 @@ void debug_cbuf(char cbuf[], int *idx, bool clear)
 
 void print_unknown_json(char cbuf[], int len=-1) {
 
-	Serial.print("{\"type\":\"debug\",\"bytes\":[");
+	Serial.print(F("{\"type\":\"debug\",\"bytes\":["));
 	//read from packet second position
 	//add in the first byte and the len byte (+2)
 	if (len == -1) {
@@ -171,6 +171,6 @@ void print_unknown_json(char cbuf[], int len=-1) {
 		print_hex( cbuf[x], 8 );
 		Serial.print("\"");
 	}
-	Serial.println("]}");
+	Serial.println(F("]}"));
 }
 

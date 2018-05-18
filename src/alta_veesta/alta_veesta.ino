@@ -1089,7 +1089,7 @@ void setup()   {
 	digitalWrite(A3, HIGH);
 	//initialize USB serial
 	Serial.begin(115200);
-	Serial.println(F("good morning"));
+	Serial.println(F("\"good morning\""));
 	memset(combuf, 0, sizeof(combuf));
 
 	#ifdef HAVE_OLED
