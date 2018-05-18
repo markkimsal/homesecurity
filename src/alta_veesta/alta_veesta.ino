@@ -202,12 +202,15 @@ void read_chars_single(char buf[], int *idx)
 	char c;
 	int  x=0;
 	int idxval = *idx;
+	digitalWrite(ledPin, HIGH);   // set the LED on
+
 	while (!vista.available()) { tunedDelay(1); }
 
 	c = vista.read();
 	buf[ idxval ] = c;
 	idxval++;
 	x++;
+	digitalWrite(ledPin, LOW);
 	*idx = idxval;
 }
 
