@@ -292,31 +292,11 @@ no alarm
 void on_status(char cbuf[], int *idx) {
 
 
-	#ifdef DEBUG_STATUS
-	/*
-	Serial.print("F2: {");
 
-	//first 6 bytes are headers
-	for (int x = 1; x < 7 ; x++) {
-		if (x > 1)
-		Serial.print(",");
-		print_hex( cbuf[x], 8);
-	}
-	//7th byte is incremental counter
-	Serial.print (" cnt: ");
-	print_hex( cbuf[7], 8 );
-	Serial.println ("}");
-
-	//8-end is body
-	Serial.print("F2: {");
-	for (int x = 8; x < *idx ; x++) {
-		print_hex( cbuf[x], 8);
-		Serial.print(",");
-	}
-
-	Serial.println("}");
-	*/
-	#endif
+	//byte 2 is lenth of message
+	//byte 3 is lenth of headers
+	//last byte of headers is counter
+	//remaining bytes are body
 
 	#ifdef DEBUG_STATUS
 	print_unknown_json( cbuf );
@@ -324,33 +304,41 @@ void on_status(char cbuf[], int *idx) {
 
 	//F2 messages with 18 bytes or less don't seem to have
 	// any important information
-	if ( 19 > (int) cbuf[1]) {
-		#ifdef DEBUG_STATUS
-		/*
-		Serial.println("F2: Unknown message - too short");
-		*/
-		#endif
-		//print unkonw messages as unknown type and list all bytes
-
+	if ( 18 >= (uint8_t) cbuf[1]) {
 		//clear memory
 		memset(cbuf, 0, sizeof(cbuf));
 		*idx = 0;
 		return;
 	}
 
-	//19th spot is 01 for disarmed, 02 for armed
-	//short armed = (0x02 & cbuf[19]) && !(cbuf[19] & 0x01);
-	short armed = 0x02 & cbuf[19];
+
+	uint8_t body_start = (uint8_t)cbuf[2] + 2;
+	uint8_t body_len   = (uint8_t)cbuf[1] - (uint8_t) cbuf[2] - 1;
+
+//	char status_hdr[ (uint8_t)cbuf[2] ];
+	char status_body[ (uint8_t)cbuf[1] - (uint8_t)cbuf[2] ];
+
+	for (uint8_t i= body_start+1; i <= (uint8_t)cbuf[1]+1; i++) {
+		status_body[ i - body_start -1 ] = cbuf[ i ];
+	}
+
+	//19th spot seems to be a decimal value
+	//01 is disarmed
+	//02 is armed
+	//03 is disarmed chime
+	short armed = 2 == (uint8_t) cbuf[19];
 
 	//20th spot is away / stay
 	// this bit is really confusing
 	// it clearly switches to 2 when you set away mode
 	// but it is also 0x02 when an alarm is canceled,
 	// but not cleared - even if you are in stay mode.
-	short away = 0x02 & cbuf[20];
+	//11th  byte in status body
+	short away = 0x02 & status_body[11];
 
 	//21st spot is for bypass
-	short bypass = 0x02 & cbuf[21];
+	//12th byte in status_body
+	short bypass = 0x02 & status_body[12];
 
 	//22nd spot is for alarm types
 	//1 is no alarm
@@ -404,7 +392,7 @@ void on_status(char cbuf[], int *idx) {
 		Serial.println ("{\"type\": \"alarm\"}");
 		//save gcbuf for debugging
 		strncpy(alarm_buf[0],  cbuf, 30);
-	} else if ( !armed  && fault  && away && !ignore_faults) {
+	} else if ( !armed && fault && !ignore_faults) {
 		//away bit always flips to 0x02 when alarm is canceled
 		Serial.println ("{\"type\": \"cancel\"}");
 	} else {
