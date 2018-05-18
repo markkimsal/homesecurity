@@ -2,7 +2,6 @@
 #define config_h
 
 //#define KPADDR 18
-const char VERSION[6] = "0.9.9";
 
 //#define DEBUG
 //#define DEBUG_STATUS

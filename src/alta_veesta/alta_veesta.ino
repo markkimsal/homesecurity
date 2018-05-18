@@ -1131,10 +1131,7 @@ void setup()   {
 	#endif
 	#endif
 	Serial.println(F("\"Starting vista keypad bus\"\n"));
-
-	Serial.print("\"Using kpaddr: ");
-	Serial.print((uint8_t)fetch_kpaddr(), DEC);
-	Serial.println("\"");
+	write_sys_info();
 
 	vista.begin( vistaBaud );
 }

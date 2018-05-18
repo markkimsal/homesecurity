@@ -1,4 +1,5 @@
 #include "alta_veesta.h"
+#include "version.h"
 #include <EEPROM.h>
 
 /**
